@@ -356,48 +356,61 @@
      結果を返す方式を使う(フォーム送信・postMessageはどちらもCORSの
      対象外なので、これで確実に動く)。
      ========================================================= */
-  var apiPendingRequests = {};
-  var apiTransportReady = false;
-  function ensureApiTransport(){
-    if(apiTransportReady) return;
-    apiTransportReady = true;
-    var iframe = document.createElement('iframe');
-    iframe.name = 'apiTransportFrame';
-    iframe.id = 'apiTransportFrame';
-    iframe.style.display = 'none';
-    document.body.appendChild(iframe);
-
-    var form = document.createElement('form');
-    form.id = 'apiTransportForm';
-    form.method = 'POST';
-    form.target = 'apiTransportFrame';
-    form.style.display = 'none';
-    var inputPayload = document.createElement('input');
-    inputPayload.type = 'hidden'; inputPayload.name = 'payload'; inputPayload.id = 'apiTransportPayload';
-    var inputReqId = document.createElement('input');
-    inputReqId.type = 'hidden'; inputReqId.name = 'requestId'; inputReqId.id = 'apiTransportReqId';
-    form.appendChild(inputPayload);
-    form.appendChild(inputReqId);
-    document.body.appendChild(form);
-
-    window.addEventListener('message', function(ev){
-      var data = ev.data;
-      if(!data || typeof data !== 'object' || !data.requestId) return;
-      var pending = apiPendingRequests[data.requestId];
-      if(!pending) return;
-      delete apiPendingRequests[data.requestId];
-      pending(data.result);
-    });
-  }
+  // 実測したところ、この隠しiframe+フォーム方式は複数のAPI呼び出しを同時に
+  // (Promise.allなどで並行して)実行すると、呼び出しごとに別々のiframeを
+  // 使っていても応答が届かず全滅する(Apps Script側のexec URLラッパーが
+  // 同時多重読み込みを想定していない模様)。1件ずつ順番に実行すれば確実に
+  // 動くため、apiCall自体の中でリクエストを直列化するキューを持たせ、
+  // 呼び出し側(Promise.allで複数書き込みをまとめて投げる箇所など)を
+  // 直す必要がないようにする。
+  var apiCallQueueTail = Promise.resolve();
   function apiCall(action, payload){
     if(!API_URL){
       return Promise.reject(new Error('API_URLが設定されていません。index.html先頭のAPI_URLにApps ScriptウェブアプリのURLを設定してください。'));
     }
-    ensureApiTransport();
+    var run = function(){ return apiCallSingle(action, payload); };
+    var result = apiCallQueueTail.then(run, run);
+    apiCallQueueTail = result.then(function(){}, function(){});
+    return result;
+  }
+  function apiCallSingle(action, payload){
     var body = Object.assign({action:action, token: session ? session.token : ''}, payload || {});
     var requestId = 'r' + Date.now() + '_' + Math.random().toString(36).slice(2);
     return new Promise(function(resolve, reject){
-      apiPendingRequests[requestId] = function(json){
+      var iframeName = 'apiFrame_' + requestId;
+      var iframe = document.createElement('iframe');
+      iframe.name = iframeName;
+      iframe.style.display = 'none';
+      document.body.appendChild(iframe);
+
+      var form = document.createElement('form');
+      form.method = 'POST';
+      form.target = iframeName;
+      form.action = API_URL;
+      form.style.display = 'none';
+      var inputPayload = document.createElement('input');
+      inputPayload.type = 'hidden'; inputPayload.name = 'payload'; inputPayload.value = JSON.stringify(body);
+      var inputReqId = document.createElement('input');
+      inputReqId.type = 'hidden'; inputReqId.name = 'requestId'; inputReqId.value = requestId;
+      form.appendChild(inputPayload);
+      form.appendChild(inputReqId);
+      document.body.appendChild(form);
+
+      var settled = false;
+      var timer = null;
+      function cleanup(){
+        window.removeEventListener('message', handler);
+        if(timer) clearTimeout(timer);
+        if(form.parentNode) form.parentNode.removeChild(form);
+        if(iframe.parentNode) iframe.parentNode.removeChild(iframe);
+      }
+      function handler(ev){
+        var data = ev.data;
+        if(!data || typeof data !== 'object' || data.requestId !== requestId) return;
+        if(settled) return;
+        settled = true;
+        cleanup();
+        var json = data.result;
         if(!json || json.ok !== true){
           var msg = (json && json.error) || 'APIエラーが発生しました。';
           if(msg.indexOf('AUTH_REQUIRED:') === 0){
@@ -408,24 +421,20 @@
           return;
         }
         resolve(json.data);
-      };
+      }
+      window.addEventListener('message', handler);
+      timer = setTimeout(function(){
+        if(settled) return;
+        settled = true;
+        cleanup();
+        reject(new Error('サーバーからの応答がありませんでした。しばらくしてから再度お試しください。'));
+      }, 45000);
+
       try{
-        var form = document.getElementById('apiTransportForm');
-        form.action = API_URL;
-        document.getElementById('apiTransportPayload').value = JSON.stringify(body);
-        document.getElementById('apiTransportReqId').value = requestId;
         form.submit();
       }catch(err){
-        delete apiPendingRequests[requestId];
-        reject(err);
-        return;
+        if(!settled){ settled = true; cleanup(); reject(err); }
       }
-      setTimeout(function(){
-        if(apiPendingRequests[requestId]){
-          delete apiPendingRequests[requestId];
-          reject(new Error('サーバーからの応答がありませんでした。しばらくしてから再度お試しください。'));
-        }
-      }, 30000);
     });
   }
   function forceLogout(){
