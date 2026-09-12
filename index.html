@@ -263,7 +263,7 @@
      Code.gs 側の RECAPTCHA_SECRET_KEY に設定します(サイトキーと違い、絶対に
      index.htmlには書かないでください)。
      ========================================================= */
-  var RECAPTCHA_SITE_KEY = '6LeSpLctAAAAALMWEjTLj-7jelpnl3tFmqyVu6mY'; // ← ここにサイトキーを設定
+  var RECAPTCHA_SITE_KEY = '6LetrLctAAAAAFtDlJwVJ9HGOnoPdoKq4N5W_VYQ'; // ← ここにサイトキーを設定
 
   /* ---------- constants ---------- */
   var SLOTS = [
@@ -348,26 +348,84 @@
     return n;
   }
 
-  /* ---------- API layer (Google Apps Script backend) ---------- */
+  /* ---------- API layer (Google Apps Script backend) ----------
+     注意: Google Apps ScriptのウェブアプリはCORSヘッダーを返さないため、
+     通常のfetch()では外部ドメイン(GitHub Pagesなど)から呼び出せない
+     (ブラウザのCORSポリシーでブロックされる)。そのため、隠しiframe+
+     隠しフォームでPOST送信し、Code.gs側からはHTML内のpostMessageで
+     結果を返す方式を使う(フォーム送信・postMessageはどちらもCORSの
+     対象外なので、これで確実に動く)。
+     ========================================================= */
+  var apiPendingRequests = {};
+  var apiTransportReady = false;
+  function ensureApiTransport(){
+    if(apiTransportReady) return;
+    apiTransportReady = true;
+    var iframe = document.createElement('iframe');
+    iframe.name = 'apiTransportFrame';
+    iframe.id = 'apiTransportFrame';
+    iframe.style.display = 'none';
+    document.body.appendChild(iframe);
+
+    var form = document.createElement('form');
+    form.id = 'apiTransportForm';
+    form.method = 'POST';
+    form.target = 'apiTransportFrame';
+    form.style.display = 'none';
+    var inputPayload = document.createElement('input');
+    inputPayload.type = 'hidden'; inputPayload.name = 'payload'; inputPayload.id = 'apiTransportPayload';
+    var inputReqId = document.createElement('input');
+    inputReqId.type = 'hidden'; inputReqId.name = 'requestId'; inputReqId.id = 'apiTransportReqId';
+    form.appendChild(inputPayload);
+    form.appendChild(inputReqId);
+    document.body.appendChild(form);
+
+    window.addEventListener('message', function(ev){
+      var data = ev.data;
+      if(!data || typeof data !== 'object' || !data.requestId) return;
+      var pending = apiPendingRequests[data.requestId];
+      if(!pending) return;
+      delete apiPendingRequests[data.requestId];
+      pending(data.result);
+    });
+  }
   function apiCall(action, payload){
     if(!API_URL){
       return Promise.reject(new Error('API_URLが設定されていません。index.html先頭のAPI_URLにApps ScriptウェブアプリのURLを設定してください。'));
     }
+    ensureApiTransport();
     var body = Object.assign({action:action, token: session ? session.token : ''}, payload || {});
-    return fetch(API_URL, {
-      method:'POST',
-      headers:{'Content-Type':'text/plain;charset=utf-8'}, // text/plain でCORSプリフライトを回避
-      body: JSON.stringify(body)
-    }).then(function(res){ return res.json(); }).then(function(json){
-      if(!json || json.ok !== true){
-        var msg = (json && json.error) || 'APIエラーが発生しました。';
-        if(msg.indexOf('AUTH_REQUIRED:') === 0){
-          forceLogout();
-          msg = msg.slice('AUTH_REQUIRED:'.length);
+    var requestId = 'r' + Date.now() + '_' + Math.random().toString(36).slice(2);
+    return new Promise(function(resolve, reject){
+      apiPendingRequests[requestId] = function(json){
+        if(!json || json.ok !== true){
+          var msg = (json && json.error) || 'APIエラーが発生しました。';
+          if(msg.indexOf('AUTH_REQUIRED:') === 0){
+            forceLogout();
+            msg = msg.slice('AUTH_REQUIRED:'.length);
+          }
+          reject(new Error(msg));
+          return;
         }
-        throw new Error(msg);
+        resolve(json.data);
+      };
+      try{
+        var form = document.getElementById('apiTransportForm');
+        form.action = API_URL;
+        document.getElementById('apiTransportPayload').value = JSON.stringify(body);
+        document.getElementById('apiTransportReqId').value = requestId;
+        form.submit();
+      }catch(err){
+        delete apiPendingRequests[requestId];
+        reject(err);
+        return;
       }
-      return json.data;
+      setTimeout(function(){
+        if(apiPendingRequests[requestId]){
+          delete apiPendingRequests[requestId];
+          reject(new Error('サーバーからの応答がありませんでした。しばらくしてから再度お試しください。'));
+        }
+      }, 30000);
     });
   }
   function forceLogout(){
