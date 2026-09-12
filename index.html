@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>モデル観察ログ</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@400;500;600;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root{
+    --bg:#f1efe6; --surface:#ffffff; --surface-alt:#e7e1d0; --border:#d6cdb6;
+    --text:#211e1a; --text-muted:#726a58;
+    --accent:#2e4e77; --accent-soft:#dde5ee; --accent-contrast:#ffffff;
+    --warm:#a9832e; --warm-soft:#f1e7cc;
+    --good:#4b7a52; --good-soft:#deecdf;
+    --danger:#a24438; --danger-soft:#f1dad5;
+    --shadow:0 1px 2px rgba(33,30,26,.07), 0 8px 20px rgba(33,30,26,.08);
+    --radius-s:7px; --radius-m:12px; --radius-l:18px;
+    --font-display:'Shippori Mincho B1', 'Hiragino Mincho ProN', serif;
+    --font-body:'Zen Kaku Gothic New', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+    --font-mono:'IBM Plex Mono', ui-monospace, monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#1b1915; --surface:#242019; --surface-alt:#2d2820; --border:#443d30;
+      --text:#ece6d9; --text-muted:#aa9f89;
+      --accent:#8faad2; --accent-soft:#2a3a52; --accent-contrast:#12131a;
+      --warm:#e3ac6a; --warm-soft:#3a2f1c;
+      --good:#86bb8c; --good-soft:#213424;
+      --danger:#e0897d; --danger-soft:#3c2420;
+      --shadow:0 1px 2px rgba(0,0,0,.35), 0 8px 24px rgba(0,0,0,.4);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#1b1915; --surface:#242019; --surface-alt:#2d2820; --border:#443d30;
+    --text:#ece6d9; --text-muted:#aa9f89;
+    --accent:#8faad2; --accent-soft:#2a3a52; --accent-contrast:#12131a;
+    --warm:#e3ac6a; --warm-soft:#3a2f1c;
+    --good:#86bb8c; --good-soft:#213424;
+    --danger:#e0897d; --danger-soft:#3c2420;
+    --shadow:0 1px 2px rgba(0,0,0,.35), 0 8px 24px rgba(0,0,0,.4);
+  }
+
+  *{box-sizing:border-box;}
+  html{background:var(--bg);}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:var(--font-body); line-height:1.6;
+    padding-inline:16px;
+  }
+  h1,h2,h3,h4{font-family:var(--font-display); text-wrap:balance; margin:0;}
+  button{font-family:inherit; cursor:pointer;}
+  input,textarea,select{font-family:inherit; font-size:inherit; color:var(--text); background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-s);}
+  input:focus-visible,textarea:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+  ::selection{background:var(--accent-soft);}
+
+  #shell{max-width:920px; margin:0 auto; padding-block:20px 60px;}
+
+  .masthead{display:flex; align-items:baseline; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:18px;}
+  .masthead h1{font-size:clamp(22px,4vw,30px); font-weight:600; letter-spacing:.02em;}
+  .masthead .sub{font-family:var(--font-mono); font-size:12px; color:var(--text-muted); letter-spacing:.04em;}
+
+  nav.tabs{display:flex; gap:6px; overflow-x:auto; padding-bottom:2px; margin-bottom:20px; border-bottom:1px solid var(--border);}
+  nav.tabs button{
+    background:none; border:none; padding:10px 14px; font-size:14px; color:var(--text-muted);
+    white-space:nowrap; border-bottom:2px solid transparent; margin-bottom:-1px; position:relative;
+    display:flex; align-items:center; gap:6px;
+  }
+  nav.tabs button.is-active{color:var(--text); border-bottom-color:var(--accent); font-weight:700;}
+  nav.tabs .badge{background:var(--danger); color:#fff; font-family:var(--font-mono); font-size:11px; padding:1px 6px; border-radius:99px;}
+
+  .card{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-m); box-shadow:var(--shadow);}
+  .panel{padding:20px;}
+  .stack{display:flex; flex-direction:column; gap:16px;}
+  .row{display:flex; gap:12px; flex-wrap:wrap; align-items:center;}
+  .row.between{justify-content:space-between;}
+
+  .btn{border-radius:var(--radius-s); padding:9px 16px; font-size:14px; font-weight:600; border:1px solid var(--border); background:var(--surface); color:var(--text);}
+  .btn:hover{border-color:var(--accent);}
+  .btn-primary{background:var(--accent); color:var(--accent-contrast); border-color:var(--accent);}
+  .btn-primary:hover{opacity:.92;}
+  .btn-secondary{background:transparent;}
+  .btn-danger-text{background:none; border:none; color:var(--danger); font-size:12px; text-decoration:underline; padding:2px 4px;}
+  .btn:disabled{opacity:.5; cursor:not-allowed;}
+  .chip-btn{border:1px solid var(--border); background:var(--surface); border-radius:99px; padding:6px 13px; font-size:13px; color:var(--text-muted);}
+  .chip-btn.is-active{background:var(--accent-soft); color:var(--accent); border-color:var(--accent); font-weight:700;}
+  .icon-btn{background:none; border:none; font-size:20px; line-height:1; color:var(--text-muted); padding:2px 6px;}
+
+  .notice{background:var(--warm-soft); border:1px solid var(--warm); color:var(--text); border-radius:var(--radius-m); padding:14px 16px; font-size:14px;}
+  .notice.error{background:var(--danger-soft); border-color:var(--danger);}
+
+  label.field{display:flex; flex-direction:column; gap:6px; font-size:13px; color:var(--text-muted); font-weight:500;}
+  label.field input, label.field textarea, label.field select{padding:9px 11px; font-size:14px; color:var(--text);}
+  label.field input:invalid{border-color:var(--danger);}
+  .field-grid{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+  @media (max-width:560px){ .field-grid{grid-template-columns:1fr;} }
+
+  .section-title{font-size:15px; font-weight:700; color:var(--text); margin-bottom:2px;}
+  .section-hint{font-size:12.5px; color:var(--text-muted); margin-bottom:8px;}
+
+  .slot-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:12px;}
+  .slot-card{border:1.5px dashed var(--border); border-radius:var(--radius-m); overflow:hidden; background:var(--surface-alt); min-height:150px; display:flex; flex-direction:column;}
+  .slot-card.has-photo{border-style:solid; background:var(--surface);}
+  .slot-label{font-size:12px; font-weight:700; padding:7px 9px; color:var(--text-muted); font-family:var(--font-mono); letter-spacing:.03em;}
+  .slot-empty-btn{flex:1; background:none; border:none; color:var(--text-muted); font-size:13px; display:flex; align-items:center; justify-content:center; padding:16px;}
+  .slot-thumb-wrap{position:relative; aspect-ratio:4/3; overflow:hidden;}
+  .slot-thumb-wrap img{width:100%; height:100%; object-fit:cover; display:block;}
+  .slot-pin-count{position:absolute; bottom:6px; right:6px; background:rgba(0,0,0,.6); color:#fff; font-size:11px; padding:2px 7px; border-radius:99px; font-family:var(--font-mono);}
+  .slot-actions{display:flex; gap:6px; padding:7px 9px; border-top:1px solid var(--border);}
+  .slot-actions button{flex:1; font-size:12px; padding:6px 4px;}
+
+  .action-rows{display:flex; flex-direction:column; gap:8px;}
+  .action-row{display:flex; gap:8px; align-items:center;}
+  .action-row input{flex:1;}
+
+  /* photo stage (shared by annotate modal + detail view) */
+  .photo-stage{position:relative; width:100%; border-radius:var(--radius-m); overflow:hidden; background:var(--surface-alt); line-height:0;}
+  .photo-stage img{width:100%; display:block; user-select:none;}
+  .pin-layer{position:absolute; inset:0;}
+  .arrow-layer{position:absolute; inset:0; width:100%; height:100%; pointer-events:none;}
+  .rel-line{stroke:var(--accent); stroke-width:.6; fill:none; pointer-events:stroke; cursor:pointer;}
+  .pin-marker{position:absolute; transform:translate(-50%,-50%); width:22px; height:22px; border:none; background:none; padding:0; cursor:pointer;}
+  .pin-dot{display:block; width:100%; height:100%; border-radius:50% 50% 50% 0; background:var(--warm); border:2px solid var(--accent-contrast); transform:rotate(-45deg); box-shadow:0 1px 3px rgba(0,0,0,.35);}
+  .pin-marker.is-selected .pin-dot{background:var(--accent); outline:2px solid var(--accent-contrast);}
+  .pin-marker:hover .pin-dot{filter:brightness(1.1);}
+
+  .annotate-toolbar{display:flex; gap:8px; margin-bottom:6px; flex-wrap:wrap;}
+  .hint{font-size:12.5px; color:var(--text-muted); margin:0 0 10px;}
+  .annotate-lists{display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:16px;}
+  @media (max-width:560px){ .annotate-lists{grid-template-columns:1fr;} }
+  .annotate-lists h4{font-size:12.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--text-muted); margin-bottom:6px;}
+  .rec-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px; max-height:160px; overflow-y:auto;}
+  .rec-list li{background:var(--surface-alt); border-radius:var(--radius-s); padding:7px 9px; font-size:13px; position:relative; padding-right:52px;}
+  .rec-list li b{display:block;}
+  .rec-list li span{color:var(--text-muted); font-size:12.5px;}
+  .rec-list li button{position:absolute; right:8px; top:8px;}
+  .rec-list li.empty{color:var(--text-muted); font-style:italic; padding-right:9px;}
+
+  /* modals */
+  .modal-overlay{position:fixed; inset:0; background:rgba(20,17,12,.5); display:flex; align-items:flex-start; justify-content:center; padding:min(6vh,40px) 16px; overflow-y:auto; z-index:50;}
+  .modal-overlay-top{z-index:60;}
+  .modal{background:var(--bg); border-radius:var(--radius-l); width:100%; max-width:640px; box-shadow:var(--shadow); padding:20px;}
+  .small-modal{max-width:400px;}
+  .modal-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;}
+  .modal-foot{display:flex; justify-content:flex-end; gap:8px; margin-top:16px;}
+  .form-body{display:flex; flex-direction:column; gap:12px;}
+  .field-checkbox{flex-direction:row; align-items:center; gap:8px;}
+  .field-checkbox input{width:auto;}
+
+  /* calendar */
+  .cal-head{display:flex; align-items:center; justify-content:center; gap:14px; margin-bottom:14px;}
+  .cal-head .cal-title{font-family:var(--font-display); font-size:19px; font-weight:600; min-width:130px; text-align:center;}
+  .cal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:4px;}
+  .cal-dow{text-align:center; font-size:11px; color:var(--text-muted); font-weight:700; padding-bottom:4px;}
+  .cal-cell{aspect-ratio:1/1; border-radius:var(--radius-s); border:1px solid var(--border); background:var(--surface); padding:4px; font-size:12px; display:flex; flex-direction:column; gap:2px; overflow:hidden; text-align:left;}
+  .cal-cell.is-outside{opacity:.35; background:transparent; border-style:dashed;}
+  .cal-cell.is-today{border-color:var(--accent); border-width:2px;}
+  .cal-cell.is-selected{background:var(--accent-soft);}
+  .cal-daynum{font-family:var(--font-mono); font-weight:600;}
+  .cal-dot{width:6px; height:6px; border-radius:50%; background:var(--warm); display:inline-block; margin-right:3px;}
+  .cal-chip{font-size:10px; background:var(--warm-soft); color:var(--text); border-radius:4px; padding:0 3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .cal-day-list{margin-top:16px;}
+
+  /* list & cards of models */
+  .model-card{display:flex; gap:14px; padding:14px; cursor:pointer;}
+  .model-card:hover{border-color:var(--accent);}
+  .model-thumb{width:88px; height:66px; border-radius:var(--radius-s); overflow:hidden; flex-shrink:0; background:var(--surface-alt); display:flex; align-items:center; justify-content:center; color:var(--text-muted); font-size:11px;}
+  .model-thumb img{width:100%; height:100%; object-fit:cover;}
+  .model-card .meta{font-size:12.5px; color:var(--text-muted); font-family:var(--font-mono);}
+  .model-card h3{font-size:16px; font-weight:600; margin-bottom:2px;}
+
+  .empty-state{text-align:center; padding:40px 16px; color:var(--text-muted);}
+
+  /* detail */
+  .detail-meta{display:flex; flex-wrap:wrap; gap:14px; font-size:13px; color:var(--text-muted); font-family:var(--font-mono);}
+  .toggle-row{display:flex; align-items:center; gap:8px; font-size:13px;}
+  .photo-gallery{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px;}
+  .photo-block figcaption{font-size:12px; color:var(--text-muted); margin-top:6px; display:flex; justify-content:space-between;}
+
+  /* cube viewer */
+  .cube-wrap{display:flex; flex-direction:column; align-items:center; gap:10px;}
+  .cube-scene{--size:min(66vw,300px); width:var(--size); height:var(--size); perspective:900px; touch-action:none; cursor:grab;}
+  .cube-scene:active{cursor:grabbing;}
+  .cube{position:relative; width:100%; height:100%; transform-style:preserve-3d;}
+  .cube-face{position:absolute; width:var(--size); height:var(--size); overflow:hidden; background:var(--surface-alt); border:1px solid var(--border);}
+  .cube-face .photo-stage{position:absolute; inset:0; border-radius:0;}
+  .cube-face .photo-stage img{width:100%; height:100%; object-fit:cover;}
+  .cube-face-label{position:absolute; top:6px; left:8px; z-index:2; font-size:11px; font-family:var(--font-mono); background:rgba(0,0,0,.55); color:#fff; padding:2px 7px; border-radius:99px; pointer-events:none;}
+  .cube-face-empty{display:flex; align-items:center; justify-content:center; height:100%; color:var(--text-muted); font-size:12px; text-align:center; padding:10px;}
+  .face-front{ transform: translateZ(calc(var(--size)/2)); }
+  .face-back{ transform: rotateY(180deg) translateZ(calc(var(--size)/2)); }
+  .face-right{ transform: rotateY(90deg) translateZ(calc(var(--size)/2)); }
+  .face-left{ transform: rotateY(-90deg) translateZ(calc(var(--size)/2)); }
+  .face-top{ transform: rotateX(90deg) translateZ(calc(var(--size)/2)); }
+  .cube-hint{font-size:12.5px; color:var(--text-muted);}
+  .slot-strip{display:flex; gap:10px; flex-wrap:wrap; justify-content:center;}
+  .slot-strip-item{display:flex; align-items:center; gap:8px; background:var(--surface-alt); border-radius:var(--radius-s); padding:6px 8px 6px 6px;}
+  .slot-strip-item img{width:34px; height:34px; object-fit:cover; border-radius:6px;}
+  .slot-strip-item span{font-size:12px; color:var(--text-muted);}
+  .slot-strip-item button{font-size:11.5px; padding:4px 8px;}
+
+  .action-card{border:1px solid var(--border); border-radius:var(--radius-m); padding:14px; background:var(--surface-alt);}
+  .action-card .action-text{font-weight:600; margin-bottom:2px;}
+  .action-card .meta{font-size:12px; color:var(--text-muted); font-family:var(--font-mono); margin-bottom:10px;}
+  .check-row{display:grid; grid-template-columns:repeat(4,1fr); gap:8px;}
+  @media (max-width:560px){ .check-row{grid-template-columns:repeat(2,1fr);} }
+  .check-chip{background:var(--surface); border-radius:var(--radius-s); padding:8px; font-size:12px; display:flex; flex-direction:column; gap:4px;}
+  .check-chip-label{font-weight:700; color:var(--text-muted); font-size:11px;}
+  .check-chip.good{background:var(--good-soft);}
+  .check-chip.danger{background:var(--danger-soft);}
+  .check-chip button{font-size:11px; padding:4px 6px; border-radius:6px;}
+  .check-comment{font-size:11.5px; color:var(--text-muted); margin:0;}
+
+  .due-item{display:flex; justify-content:space-between; align-items:center; gap:12px; padding:12px 14px; border-radius:var(--radius-m); background:var(--danger-soft); flex-wrap:wrap;}
+  .due-item .info{font-size:13px;}
+  .due-item .info b{display:block; font-size:14.5px;}
+  .upcoming-item{display:flex; justify-content:space-between; padding:9px 14px; font-size:13px; border-bottom:1px solid var(--border);}
+  .upcoming-item:last-child{border-bottom:none;}
+
+  .sync-note{font-family:var(--font-mono); font-size:11px; color:var(--text-muted); text-align:right;}
+  #globalNotice:empty{display:none;}
+  #globalNotice .notice{margin-bottom:16px;}
+
+  @media (max-width:480px){ .field-grid{grid-template-columns:1fr;} .annotate-lists{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+<div id="shell">
+  <header class="masthead">
+    <div>
+      <h1>モデル観察ログ</h1>
+      <div class="sub">LEGO&reg;SERIOUS PLAY&reg; モデル記録</div>
+    </div>
+    <div class="sync-note" id="syncNote"></div>
+  </header>
+  <div id="globalNotice"></div>
+  <nav class="tabs" id="tabs"></nav>
+  <main id="view"></main>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* =========================================================
+     API_URL: デプロイしたGoogle Apps ScriptウェブアプリのURLを
+     ここに貼り付けてください（例: https://script.google.com/macros/s/XXXX/exec）。
+     セットアップ手順.md を参照してください。
+     ========================================================= */
+  var API_URL = ''; // ← ここにデプロイURLを設定
+
+  /* ---------- constants ---------- */
+  var SLOTS = [
+    {key:'front', label:'正面から'},
+    {key:'right', label:'右から'},
+    {key:'left',  label:'左から'},
+    {key:'top',   label:'上から'},
+    {key:'back',  label:'背面から'}
+  ];
+  var CHECK_ORDER = ['d3','w1','m1','m3'];
+  var CHECK_LABELS = {d3:'3日後', w1:'1週間後', m1:'1ヶ月後', m3:'3ヶ月後'};
+  var POLL_INTERVAL_MS = 25000;
+
+  /* ---------- state ---------- */
+  var currentView = 'calendar';
+  var currentDetailId = null;
+  var pinsVisible = true;
+  var today = new Date();
+  var calYear = today.getFullYear(), calMonth = today.getMonth();
+  var selectedCalDate = todayStr();
+  var modelsList = [], photosList = [], actionsList = [];
+  var saving = false;
+  var formError = '';
+  var lastSyncAt = null;
+
+  function freshDraft(){
+    return {
+      title:'', date:todayStr(), place:'', noticed:'', createdBy:'',
+      photos:{front:null,right:null,left:null,top:null,back:null},
+      actions:['']
+    };
+  }
+  var draft = freshDraft();
+
+  /* ---------- utils ---------- */
+  function pad(n){ return String(n).padStart(2,'0'); }
+  function todayStr(){ var d=new Date(); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
+  function addDays(dateStr,n){ var d=new Date(dateStr+'T00:00:00'); d.setDate(d.getDate()+n); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
+  function addMonths(dateStr,n){ var d=new Date(dateStr+'T00:00:00'); d.setMonth(d.getMonth()+n); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
+  function uid(){ return 'id'+Math.random().toString(36).slice(2,9)+Date.now().toString(36); }
+  function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  function blobUrl(id){ return id ? ('https://drive.google.com/thumbnail?id='+id+'&sz=w1600') : ''; }
+  function computeChecks(registeredAt){
+    return {
+      d3:{due:addDays(registeredAt,3), done:false, score:null, comment:'', checkedAt:null},
+      w1:{due:addDays(registeredAt,7), done:false, score:null, comment:'', checkedAt:null},
+      m1:{due:addMonths(registeredAt,1), done:false, score:null, comment:'', checkedAt:null},
+      m3:{due:addMonths(registeredAt,3), done:false, score:null, comment:'', checkedAt:null}
+    };
+  }
+  function checkStatus(action, key){
+    var c = action.checks[key];
+    if(c.done) return {text:'済 ('+c.score+'点)', cls:'good'};
+    if(action.stopped) return {text:'対象外', cls:''};
+    if(c.due <= todayStr()) return {text:'要チェック', cls:'danger'};
+    return {text:c.due+'〜', cls:''};
+  }
+  function dueChecksFor(action){
+    if(action.stopped) return [];
+    var out = [];
+    CHECK_ORDER.forEach(function(key){
+      var c = action.checks[key];
+      if(!c.done && c.due <= todayStr()) out.push({key:key, due:c.due});
+    });
+    return out;
+  }
+  function computeDueCount(){
+    var n = 0;
+    actionsList.forEach(function(a){ n += dueChecksFor(a).length; });
+    return n;
+  }
+
+  /* ---------- API layer (Google Apps Script backend) ---------- */
+  function apiCall(action, payload){
+    if(!API_URL){
+      return Promise.reject(new Error('API_URLが設定されていません。index.html先頭のAPI_URLにApps ScriptウェブアプリのURLを設定してください。'));
+    }
+    var body = Object.assign({action:action}, payload || {});
+    return fetch(API_URL, {
+      method:'POST',
+      headers:{'Content-Type':'text/plain;charset=utf-8'}, // text/plain でCORSプリフライトを回避
+      body: JSON.stringify(body)
+    }).then(function(res){ return res.json(); }).then(function(json){
+      if(!json || json.ok !== true) throw new Error((json && json.error) || 'APIエラーが発生しました。');
+      return json.data;
+    });
+  }
+  function fileToBase64(file){
+    return new Promise(function(resolve, reject){
+      var reader = new FileReader();
+      reader.onload = function(){
+        var result = String(reader.result);
+        resolve(result.substring(result.indexOf(',')+1));
+      };
+      reader.onerror = function(){ reject(reader.error); };
+      reader.readAsDataURL(file);
+    });
+  }
+  async function apiUploadImage(file){
+    var base64 = await fileToBase64(file);
+    return apiCall('uploadImage', {base64:base64, filename:file.name, mimeType:file.type || 'image/jpeg'});
+  }
+  async function refreshData(silent){
+    try{
+      var data = await apiCall('listAll', {});
+      modelsList = data.models || [];
+      photosList = data.photos || [];
+      actionsList = data.actions || [];
+      lastSyncAt = new Date();
+      renderApp();
+    }catch(e){
+      console.error(e);
+      if(!silent){ formError = '記録の読み込みに失敗しました: '+e.message; renderView(); }
+      updateSyncNote(true);
+    }
+  }
+  function updateSyncNote(failed){
+    var el = document.getElementById('syncNote');
+    if(!el) return;
+    if(!API_URL){ el.textContent = 'API_URL未設定'; return; }
+    if(failed){ el.textContent = '同期エラー'; return; }
+    el.textContent = lastSyncAt ? ('最終更新 '+lastSyncAt.toLocaleTimeString('ja-JP')) : '';
+  }
+
+  /* ---------- generic form dialog ---------- */
+  function openFormDialog(opts){
+    var fields = opts.fields || [];
+    var ov = document.createElement('div');
+    ov.className = 'modal-overlay modal-overlay-top';
+    var fieldsHtml = fields.map(function(f){
+      if(f.type === 'checkbox'){
+        return '<label class="field field-checkbox"><input type="checkbox" name="'+f.key+'" '+(f.value?'checked':'')+' /><span>'+escapeHtml(f.label)+'</span></label>';
+      }
+      if(f.type === 'select'){
+        var opts2 = (f.options||[]).map(function(o){ return '<option value="'+o+'" '+(String(o)===String(f.value)?'selected':'')+'>'+o+'</option>'; }).join('');
+        return '<label class="field"><span>'+escapeHtml(f.label)+'</span><select name="'+f.key+'">'+opts2+'</select></label>';
+      }
+      if(f.type === 'textarea'){
+        return '<label class="field"><span>'+escapeHtml(f.label)+'</span><textarea name="'+f.key+'" rows="3" '+(opts.readonly?'readonly':'')+'>'+escapeHtml(f.value||'')+'</textarea></label>';
+      }
+      return '<label class="field"><span>'+escapeHtml(f.label)+'</span><input type="text" name="'+f.key+'" value="'+escapeHtml(f.value||'')+'" '+(opts.readonly?'readonly':'')+'/></label>';
+    }).join('');
+    ov.innerHTML =
+      '<div class="modal small-modal">'+
+        '<div class="modal-head"><h3>'+escapeHtml(opts.title||'')+'</h3><button class="icon-btn" data-x>&times;</button></div>'+
+        '<form class="form-body">'+ fieldsHtml +
+          '<div class="modal-foot">'+
+            (opts.readonly ? '<button type="button" class="btn btn-secondary" data-close>閉じる</button>' : '<button type="submit" class="btn btn-primary">保存</button>')+
+          '</div>'+
+        '</form>'+
+      '</div>';
+    document.body.appendChild(ov);
+    ov.querySelector('[data-x]').onclick = function(){ ov.remove(); };
+    var closeBtn = ov.querySelector('[data-close]');
+    if(closeBtn) closeBtn.onclick = function(){ ov.remove(); };
+    ov.addEventListener('click', function(e){ if(e.target === ov) ov.remove(); });
+    var form = ov.querySelector('form');
+    if(!opts.readonly){
+      form.onsubmit = function(e){
+        e.preventDefault();
+        var vals = {};
+        fields.forEach(function(f){
+          var el = form.elements[f.key];
+          vals[f.key] = f.type === 'checkbox' ? el.checked : el.value;
+        });
+        ov.remove();
+        opts.onSubmit && opts.onSubmit(vals);
+      };
+      var firstInput = form.querySelector('input[type=text],textarea');
+      if(firstInput) firstInput.focus();
+    }
+  }
+
+  /* ---------- annotate modal ---------- */
+  function openAnnotateModal(cfg){
+    var localPins = JSON.parse(JSON.stringify(cfg.pins || []));
+    var localRelations = JSON.parse(JSON.stringify(cfg.relations || []));
+    var mode = 'view';
+    var relFirstId = null;
+    var editable = !!cfg.editable;
+
+    var ov = document.createElement('div');
+    ov.className = 'modal-overlay';
+    document.body.appendChild(ov);
+
+    function modeHint(){
+      if(mode === 'pin') return '写真の中をクリックして「部分」を登録します。既存のピンをクリックすると編集できます。';
+      if(mode === 'relation') return relFirstId ? 'もう一方の部分（ピン）をクリックして関係を作成します。' : '関係の起点となる部分（ピン）をクリックしてください。';
+      return 'ピンをクリックすると、その部分の名称と意味を確認できます。';
+    }
+
+    function pinMarkerHtml(p){
+      return '<button type="button" class="pin-marker'+(relFirstId===p.id?' is-selected':'')+'" data-pin-id="'+p.id+'" style="left:'+p.x+'%;top:'+p.y+'%" title="'+escapeHtml(p.name)+'"><span class="pin-dot"></span></button>';
+    }
+    function svgHtml(){
+      var lines = localRelations.map(function(r){
+        var a = localPins.filter(function(p){return p.id===r.fromPinId;})[0];
+        var b = localPins.filter(function(p){return p.id===r.toPinId;})[0];
+        if(!a || !b) return '';
+        return '<line class="rel-line" data-rel-id="'+r.id+'" x1="'+a.x+'" y1="'+a.y+'" x2="'+b.x+'" y2="'+b.y+'" marker-end="url(#arrow-'+cfg.slot+')"></line>';
+      }).join('');
+      return '<defs><marker id="arrow-'+cfg.slot+'" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4.5" markerHeight="4.5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"></path></marker></defs>'+lines;
+    }
+
+    function render(){
+      ov.innerHTML =
+        '<div class="modal">'+
+          '<div class="modal-head"><h3>'+escapeHtml(cfg.label)+'の注釈</h3><button class="icon-btn" data-x>&times;</button></div>'+
+          (editable ?
+            '<div class="annotate-toolbar">'+
+              '<button type="button" class="chip-btn'+(mode==='pin'?' is-active':'')+'" data-mode="pin">部分を追加</button>'+
+              '<button type="button" class="chip-btn'+(mode==='relation'?' is-active':'')+'" data-mode="relation">関係を追加</button>'+
+              '<button type="button" class="chip-btn'+(mode==='view'?' is-active':'')+'" data-mode="view">選択解除</button>'+
+            '</div><p class="hint">'+modeHint()+'</p>' : '<p class="hint">'+modeHint()+'</p>') +
+          '<div class="photo-stage" data-stage>'+
+            '<img src="'+cfg.imgSrc+'" alt="'+escapeHtml(cfg.label)+'" draggable="false" />'+
+            '<div class="pin-layer">'+localPins.map(pinMarkerHtml).join('')+'</div>'+
+            '<svg class="arrow-layer" viewBox="0 0 100 100" preserveAspectRatio="none">'+svgHtml()+'</svg>'+
+          '</div>'+
+          '<div class="annotate-lists">'+
+            '<div><h4>部分 ('+localPins.length+')</h4><ul class="rec-list">'+
+              (localPins.length ? localPins.map(function(p){
+                return '<li><b>'+escapeHtml(p.name)+'</b><span>'+escapeHtml(p.meaning)+'</span>'+(editable?'<button data-del-pin="'+p.id+'" class="btn-danger-text">削除</button>':'')+'</li>';
+              }).join('') : '<li class="empty">まだありません</li>')+
+            '</ul></div>'+
+            '<div><h4>関係 ('+localRelations.length+')</h4><ul class="rec-list">'+
+              (localRelations.length ? localRelations.map(function(r){
+                var a = localPins.filter(function(p){return p.id===r.fromPinId;})[0];
+                var b = localPins.filter(function(p){return p.id===r.toPinId;})[0];
+                return '<li><b>'+escapeHtml(a?a.name:'?')+' → '+escapeHtml(b?b.name:'?')+'</b><span>'+escapeHtml(r.meaning)+'</span>'+(editable?'<button data-del-rel="'+r.id+'" class="btn-danger-text">削除</button>':'')+'</li>';
+              }).join('') : '<li class="empty">まだありません</li>')+
+            '</ul></div>'+
+          '</div>'+
+          '<div class="modal-foot"><button type="button" class="btn btn-primary" data-done>完了</button></div>'+
+        '</div>';
+      wire();
+    }
+
+    function commit(){ cfg.onChange && cfg.onChange(localPins, localRelations); }
+
+    function wire(){
+      ov.querySelector('[data-x]').onclick = close;
+      ov.querySelector('[data-done]').onclick = close;
+      if(editable){
+        var mp = ov.querySelector('[data-mode="pin"]'); if(mp) mp.onclick = function(){ mode='pin'; relFirstId=null; render(); };
+        var mr = ov.querySelector('[data-mode="relation"]'); if(mr) mr.onclick = function(){ mode='relation'; relFirstId=null; render(); };
+        var mv = ov.querySelector('[data-mode="view"]'); if(mv) mv.onclick = function(){ mode='view'; relFirstId=null; render(); };
+        Array.prototype.forEach.call(ov.querySelectorAll('[data-del-pin]'), function(b){
+          b.onclick = function(){
+            var id = b.getAttribute('data-del-pin');
+            localPins = localPins.filter(function(p){ return p.id!==id; });
+            localRelations = localRelations.filter(function(r){ return r.fromPinId!==id && r.toPinId!==id; });
+            commit(); render();
+          };
+        });
+        Array.prototype.forEach.call(ov.querySelectorAll('[data-del-rel]'), function(b){
+          b.onclick = function(){
+            var id = b.getAttribute('data-del-rel');
+            localRelations = localRelations.filter(function(r){ return r.id!==id; });
+            commit(); render();
+          };
+        });
+        var stage = ov.querySelector('[data-stage]');
+        stage.addEventListener('click', onStageClick);
+      } else {
+        Array.prototype.forEach.call(ov.querySelectorAll('.pin-marker'), function(btn){
+          btn.onclick = function(){
+            var p = localPins.filter(function(pp){ return pp.id === btn.getAttribute('data-pin-id'); })[0];
+            if(p) openFormDialog({title:p.name, readonly:true, fields:[{key:'meaning', label:'意味するもの', type:'textarea', value:p.meaning}]});
+          };
+        });
+        Array.prototype.forEach.call(ov.querySelectorAll('.rel-line'), function(line){
+          line.onclick = function(){
+            var r = localRelations.filter(function(rr){ return rr.id === line.getAttribute('data-rel-id'); })[0];
+            if(r) openFormDialog({title:'関係', readonly:true, fields:[{key:'meaning', label:'その矢印が意味するもの', type:'textarea', value:r.meaning}]});
+          };
+        });
+      }
+    }
+
+    function onStageClick(e){
+      var markerBtn = e.target.closest('.pin-marker');
+      if(mode === 'pin'){
+        if(markerBtn){
+          var p = localPins.filter(function(pp){ return pp.id === markerBtn.getAttribute('data-pin-id'); })[0];
+          if(p) openFormDialog({
+            title:'部分を編集',
+            fields:[{key:'name', label:'その部分の名称', value:p.name},{key:'meaning', label:'その部分の意味するもの', type:'textarea', value:p.meaning}],
+            onSubmit:function(vals){ if(!vals.name.trim()) return; p.name=vals.name.trim(); p.meaning=vals.meaning.trim(); commit(); render(); }
+          });
+        } else {
+          var rect = e.currentTarget.getBoundingClientRect();
+          var x = Math.min(100, Math.max(0, (e.clientX-rect.left)/rect.width*100));
+          var y = Math.min(100, Math.max(0, (e.clientY-rect.top)/rect.height*100));
+          openFormDialog({
+            title:'部分を登録',
+            fields:[{key:'name', label:'その部分の名称'},{key:'meaning', label:'その部分の意味するもの', type:'textarea'}],
+            onSubmit:function(vals){ if(!vals.name.trim()) return; localPins.push({id:uid(), x:x, y:y, name:vals.name.trim(), meaning:vals.meaning.trim()}); commit(); render(); }
+          });
+        }
+      } else if(mode === 'relation'){
+        if(!markerBtn) return;
+        var id = markerBtn.getAttribute('data-pin-id');
+        if(!relFirstId){ relFirstId = id; render(); }
+        else if(relFirstId === id){ relFirstId = null; render(); }
+        else {
+          var fromId = relFirstId, toId = id;
+          relFirstId = null;
+          openFormDialog({
+            title:'関係を登録',
+            fields:[{key:'meaning', label:'その矢印が意味するもの', type:'textarea'}],
+            onSubmit:function(vals){ localRelations.push({id:uid(), fromPinId:fromId, toPinId:toId, meaning:vals.meaning.trim()}); commit(); render(); }
+          });
+          render();
+        }
+      }
+    }
+
+    function close(){ ov.remove(); cfg.onClose && cfg.onClose(); }
+    render();
+  }
+
+  function openAnnotateForSlot(slotKey, mode, modelId){
+    var label = SLOTS.filter(function(s){ return s.key===slotKey; })[0].label;
+    if(mode === 'draft'){
+      var p = draft.photos[slotKey];
+      if(!p) return;
+      openAnnotateModal({
+        slot:slotKey, label:label, imgSrc:p.previewUrl, pins:p.pins, relations:p.relations, editable:true,
+        onChange:function(pins, relations){ p.pins = pins; p.relations = relations; },
+        onClose:function(){ renderView(); }
+      });
+    } else {
+      var photoDoc = photosList.filter(function(ph){ return ph.modelId===modelId && ph.slot===slotKey; })[0];
+      if(!photoDoc) return;
+      openAnnotateModal({
+        slot:slotKey, label:label, imgSrc:blobUrl(photoDoc.assetId), pins:photoDoc.pins||[], relations:photoDoc.relations||[], editable:true,
+        onChange:function(pins, relations){
+          photoDoc.pins = pins; photoDoc.relations = relations; // optimistic local update
+          apiCall('updatePhotoAnnotations', {id:photoDoc.id, pins:pins, relations:relations}).catch(function(e){ console.error(e); });
+        },
+        onClose:function(){ renderView(); refreshData(true); }
+      });
+    }
+  }
+
+  function openCheckForm(actionId, key){
+    var action = actionsList.filter(function(a){ return a.id===actionId; })[0];
+    if(!action) return;
+    openFormDialog({
+      title:'アクションチェック ('+CHECK_LABELS[key]+')',
+      fields:[
+        {key:'score', label:'実施できましたか（5点満点）', type:'select', options:[1,2,3,4,5], value:3},
+        {key:'comment', label:'感想', type:'textarea'},
+        {key:'stop', label:'今後はアクションチェックをしない', type:'checkbox'}
+      ],
+      onSubmit:function(vals){
+        apiCall('recordActionCheck', {id:actionId, key:key, score:Number(vals.score), comment:vals.comment.trim(), stop:!!vals.stop})
+          .then(function(){ return refreshData(true); })
+          .catch(function(e){ console.error(e); formError='チェックの保存に失敗しました。'; renderView(); });
+      }
+    });
+  }
+
+  /* ---------- rendering: nav ---------- */
+  function renderNav(){
+    var due = computeDueCount();
+    var tabs = [
+      {key:'calendar', label:'カレンダー'},
+      {key:'list', label:'記録一覧'},
+      {key:'new', label:'新規記録'},
+      {key:'checks', label:'アクションチェック', badge:due}
+    ];
+    document.getElementById('tabs').innerHTML = tabs.map(function(t){
+      return '<button data-action="nav" data-view="'+t.key+'" class="'+(currentView===t.key?'is-active':'')+'">'+t.label+(t.badge ? '<span class="badge">'+t.badge+'</span>' : '')+'</button>';
+    }).join('');
+    var notice = document.getElementById('globalNotice');
+    if(notice) notice.innerHTML = API_URL ? '' : '<div class="notice">API_URLが未設定です。「セットアップ手順.md」に沿ってApps ScriptウェブアプリのURLをこのページ(index.html)先頭のAPI_URLに設定してください。</div>';
+    updateSyncNote(false);
+  }
+
+  /* ---------- rendering: calendar ---------- */
+  function viewCalendarHtml(){
+    var first = new Date(calYear, calMonth, 1);
+    var startDow = first.getDay();
+    var daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
+    var prevDays = new Date(calYear, calMonth, 0).getDate();
+    var cells = [];
+    for(var i=startDow-1;i>=0;i--) cells.push({outside:true, day:prevDays-i});
+    for(var d=1; d<=daysInMonth; d++) cells.push({outside:false, day:d});
+    while(cells.length % 7 !== 0) cells.push({outside:true, day:cells.length - (startDow+daysInMonth) + 1});
+
+    var todayS = todayStr();
+    var byDate = {};
+    modelsList.forEach(function(m){ (byDate[m.date] = byDate[m.date] || []).push(m); });
+
+    var dowLabels = ['日','月','火','水','木','金','土'];
+    var html = '<div class="card panel stack">';
+    html += '<div class="cal-head"><button class="btn" data-action="cal-prev">&lsaquo; 前の月</button><span class="cal-title">'+calYear+'年 '+(calMonth+1)+'月</span><button class="btn" data-action="cal-next">次の月 &rsaquo;</button><button class="btn btn-secondary" data-action="cal-today">今月</button></div>';
+    html += '<div class="cal-grid">';
+    dowLabels.forEach(function(l){ html += '<div class="cal-dow">'+l+'</div>'; });
+    cells.forEach(function(c){
+      if(c.outside){ html += '<div class="cal-cell is-outside"><span class="cal-daynum">'+c.day+'</span></div>'; return; }
+      var dateStr = calYear+'-'+pad(calMonth+1)+'-'+pad(c.day);
+      var items = byDate[dateStr] || [];
+      var cls = 'cal-cell';
+      if(dateStr===todayS) cls += ' is-today';
+      if(dateStr===selectedCalDate) cls += ' is-selected';
+      html += '<button type="button" class="'+cls+'" data-action="cal-day" data-date="'+dateStr+'">';
+      html += '<span class="cal-daynum">'+c.day+'</span>';
+      items.slice(0,2).forEach(function(m){ html += '<span class="cal-chip"><span class="cal-dot"></span>'+escapeHtml(m.title)+'</span>'; });
+      if(items.length>2) html += '<span class="cal-chip">+'+(items.length-2)+'</span>';
+      html += '</button>';
+    });
+    html += '</div>';
+
+    var dayItems = byDate[selectedCalDate] || [];
+    html += '<div class="cal-day-list stack">';
+    html += '<h3 class="section-title">'+selectedCalDate+' の記録 ('+dayItems.length+')</h3>';
+    if(dayItems.length===0){ html += '<p class="section-hint">この日の記録はまだありません。</p>'; }
+    dayItems.forEach(function(m){ html += modelCardHtml(m); });
+    html += '</div>';
+    html += '</div>';
+    return html;
+  }
+
+  /* ---------- rendering: list ---------- */
+  function modelCardHtml(m){
+    var thumb = m.coverAssetId ? '<img src="'+blobUrl(m.coverAssetId)+'" alt="" />' : 'no photo';
+    return '<div class="card model-card" data-action="open-detail" data-id="'+m.id+'">'+
+      '<div class="model-thumb">'+thumb+'</div>'+
+      '<div><h3>'+escapeHtml(m.title)+'</h3>'+
+      '<div class="meta">'+m.date+(m.place?' ・ '+escapeHtml(m.place):'')+'</div>'+
+      '<div class="meta">記録者: '+escapeHtml(m.createdBy||'匿名')+'</div></div>'+
+    '</div>';
+  }
+  function viewListHtml(){
+    var sorted = modelsList.slice().sort(function(a,b){ return a.date < b.date ? 1 : -1; });
+    var html = '<div class="stack">';
+    if(sorted.length===0){ html += '<div class="card panel empty-state">まだ記録がありません。「新規記録」から最初のモデルを登録しましょう。</div>'; }
+    else { sorted.forEach(function(m){ html += modelCardHtml(m); }); }
+    html += '</div>';
+    return html;
+  }
+
+  /* ---------- rendering: new record form ---------- */
+  function slotCardHtml(slot){
+    var p = draft.photos[slot.key];
+    if(!p){
+      return '<div class="slot-card"><div class="slot-label">'+slot.label+'</div>'+
+        '<button type="button" class="slot-empty-btn" data-action="photo-upload-slot" data-slot="'+slot.key+'">＋ 写真を追加</button>'+
+        '<input type="file" accept="image/*" id="file-'+slot.key+'" style="display:none" />'+
+      '</div>';
+    }
+    return '<div class="slot-card has-photo"><div class="slot-label">'+slot.label+'</div>'+
+      '<div class="slot-thumb-wrap"><img src="'+p.previewUrl+'" alt="" />'+ (p.pins.length ? '<span class="slot-pin-count">ピン '+p.pins.length+'</span>' : '')+'</div>'+
+      '<div class="slot-actions"><button type="button" class="btn" data-action="annotate-open" data-slot="'+slot.key+'" data-mode="draft">注釈を編集</button>'+
+      '<button type="button" class="btn btn-secondary" data-action="photo-remove" data-slot="'+slot.key+'">削除</button></div>'+
+    '</div>';
+  }
+  function viewNewHtml(){
+    var html = '<div class="card panel stack">';
+    html += '<h2 class="section-title">新規モデル記録</h2>';
+    if(!API_URL) html += '<div class="notice">API_URLが未設定です。保存するにはindex.html内のAPI_URLにApps ScriptウェブアプリのURLを設定してください。</div>';
+    if(formError) html += '<div class="notice error">'+escapeHtml(formError)+'</div>';
+    html += '<div class="field-grid">';
+    html += '<label class="field"><span>タイトル</span><input type="text" id="f-title" value="'+escapeHtml(draft.title)+'" placeholder="例）チームの未来像モデル" /></label>';
+    html += '<label class="field"><span>日付</span><input type="date" id="f-date" value="'+draft.date+'" /></label>';
+    html += '<label class="field"><span>場所・イベント</span><input type="text" id="f-place" value="'+escapeHtml(draft.place)+'" placeholder="例）第3回LSPワークショップ" /></label>';
+    html += '<label class="field"><span>記録者名</span><input type="text" id="f-createdby" value="'+escapeHtml(draft.createdBy)+'" placeholder="お名前" /></label>';
+    html += '</div>';
+
+    html += '<div><div class="section-title">写真（最低1枚・最大5方向）</div><div class="section-hint">正面・右・左・上・背面のうち、撮影した角度だけ登録すれば構いません。</div>';
+    html += '<div class="slot-grid">' + SLOTS.map(slotCardHtml).join('') + '</div></div>';
+
+    html += '<label class="field"><span>そのときに気づいたこと</span><textarea id="f-noticed" rows="3" placeholder="モデルを作りながら気づいたことを書き留めます">'+escapeHtml(draft.noticed)+'</textarea></label>';
+
+    html += '<div><div class="section-title">明日からのアクション</div><div class="section-hint">3日後・1週間後・1ヶ月後・3ヶ月後にチェックを行います。</div>';
+    html += '<div class="action-rows" id="actionRows">';
+    draft.actions.forEach(function(a, i){
+      html += '<div class="action-row"><input type="text" class="action-row-input" data-idx="'+i+'" value="'+escapeHtml(a)+'" placeholder="例）毎朝チームに一言共有する" />'+
+        (draft.actions.length>1 ? '<button type="button" class="btn btn-secondary" data-action="action-remove-row" data-idx="'+i+'">削除</button>' : '')+
+      '</div>';
+    });
+    html += '</div><button type="button" class="btn" data-action="action-add-row" style="margin-top:8px;">＋ アクションを追加</button></div>';
+
+    html += '<div class="row" style="justify-content:flex-end;"><button type="button" class="btn btn-primary" data-action="save-new-model" '+(saving?'disabled':'')+'>'+(saving?'保存中…':'この記録を保存')+'</button></div>';
+    html += '</div>';
+    return html;
+  }
+  function afterNewRender(){
+    var t = document.getElementById('f-title'); if(t) t.oninput = function(e){ draft.title = e.target.value; };
+    var dt = document.getElementById('f-date'); if(dt) dt.oninput = function(e){ draft.date = e.target.value; };
+    var pl = document.getElementById('f-place'); if(pl) pl.oninput = function(e){ draft.place = e.target.value; };
+    var cb = document.getElementById('f-createdby'); if(cb) cb.oninput = function(e){ draft.createdBy = e.target.value; };
+    var nt = document.getElementById('f-noticed'); if(nt) nt.oninput = function(e){ draft.noticed = e.target.value; };
+    Array.prototype.forEach.call(document.querySelectorAll('.action-row-input'), function(el){
+      el.oninput = function(e){ draft.actions[Number(el.getAttribute('data-idx'))] = e.target.value; };
+    });
+    SLOTS.forEach(function(slot){
+      var input = document.getElementById('file-'+slot.key);
+      if(!input) return;
+      input.onchange = function(e){
+        var file = e.target.files[0];
+        if(!file) return;
+        formError = '';
+        apiUploadImage(file).then(function(res){
+          draft.photos[slot.key] = {assetId:res.id, previewUrl:res.url, pins:[], relations:[]};
+          renderView();
+        }).catch(function(err){
+          formError = '写真のアップロードに失敗しました: '+err.message;
+          renderView();
+        });
+      };
+    });
+  }
+
+  async function doSaveNewModel(){
+    var title = draft.title.trim();
+    var date = draft.date;
+    var hasPhoto = SLOTS.some(function(s){ return !!draft.photos[s.key]; });
+    if(!title){ formError='タイトルを入力してください。'; renderView(); return; }
+    if(!date){ formError='日付を入力してください。'; renderView(); return; }
+    if(!hasPhoto){ formError='写真を少なくとも1枚登録してください。'; renderView(); return; }
+    formError=''; saving=true; renderView();
+    try{
+      var coverSlot = SLOTS.filter(function(s){ return !!draft.photos[s.key]; })[0];
+      var cover = coverSlot ? draft.photos[coverSlot.key] : null;
+      var modelRes = await apiCall('createModel', {model:{
+        title:title, date:date, place:draft.place.trim(), noticed:draft.noticed.trim(),
+        createdBy: draft.createdBy.trim() || '匿名', coverAssetId: cover ? cover.assetId : ''
+      }});
+      var modelId = modelRes.id;
+      var writes = [];
+      SLOTS.forEach(function(s){
+        var p = draft.photos[s.key];
+        if(!p) return;
+        writes.push(apiCall('createPhoto', {photo:{
+          modelId:modelId, slot:s.key, assetId:p.assetId, pins:p.pins||[], relations:p.relations||[]
+        }}));
+      });
+      draft.actions.filter(function(a){ return a.trim(); }).forEach(function(text){
+        writes.push(apiCall('createAction', {actionItem:{
+          modelId:modelId, modelTitle:title, text:text.trim(), registeredAt:date, checks:computeChecks(date)
+        }}));
+      });
+      await Promise.all(writes);
+      draft = freshDraft();
+      saving = false;
+      currentView = 'detail'; currentDetailId = modelId;
+      await refreshData(true);
+    }catch(e){
+      console.error(e);
+      saving = false;
+      formError = '保存に失敗しました: '+e.message;
+      renderView();
+    }
+  }
+
+  /* ---------- rendering: detail ---------- */
+  function photoStageInnerHtml(photoDoc){
+    var pins = photoDoc.pins || [], relations = photoDoc.relations || [];
+    var pinsHtml = pinsVisible ? pins.map(function(p){
+      return '<button type="button" class="pin-marker" data-pin-id="'+p.id+'" style="left:'+p.x+'%;top:'+p.y+'%" title="'+escapeHtml(p.name)+'"><span class="pin-dot"></span></button>';
+    }).join('') : '';
+    var linesHtml = pinsVisible ? relations.map(function(r){
+      var a = pins.filter(function(p){return p.id===r.fromPinId;})[0];
+      var b = pins.filter(function(p){return p.id===r.toPinId;})[0];
+      if(!a||!b) return '';
+      return '<line class="rel-line" data-rel-id="'+r.id+'" x1="'+a.x+'" y1="'+a.y+'" x2="'+b.x+'" y2="'+b.y+'" marker-end="url(#arrow-d-'+photoDoc.slot+')"></line>';
+    }).join('') : '';
+    var defs = '<defs><marker id="arrow-d-'+photoDoc.slot+'" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4.5" markerHeight="4.5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"></path></marker></defs>';
+    var pinsAttr = escapeHtml(JSON.stringify(pins));
+    var relsAttr = escapeHtml(JSON.stringify(relations));
+    var slotLabel = SLOTS.filter(function(s){ return s.key===photoDoc.slot; })[0];
+    slotLabel = slotLabel ? slotLabel.label : photoDoc.slot;
+    return '<div class="photo-stage" data-readonly data-pins="'+pinsAttr+'" data-relations="'+relsAttr+'">'+
+        '<img src="'+blobUrl(photoDoc.assetId)+'" alt="'+escapeHtml(slotLabel)+'" />'+
+        '<div class="pin-layer">'+pinsHtml+'</div>'+
+        '<svg class="arrow-layer" viewBox="0 0 100 100" preserveAspectRatio="none">'+defs+linesHtml+'</svg>'+
+      '</div>';
+  }
+  function cubeHtml(m, photos){
+    var byKey = {};
+    photos.forEach(function(p){ byKey[p.slot] = p; });
+    function face(slotKey, cls){
+      var slotDef = SLOTS.filter(function(s){ return s.key===slotKey; })[0];
+      var p = byKey[slotKey];
+      var inner = p ? photoStageInnerHtml(p) : '<div class="cube-face-empty">'+escapeHtml(slotDef.label)+'<br>未撮影</div>';
+      return '<div class="cube-face '+cls+'"><span class="cube-face-label">'+escapeHtml(slotDef.label)+'</span>'+inner+'</div>';
+    }
+    return '<div class="cube-wrap">'+
+      '<div class="cube-scene" data-cube>'+
+        '<div class="cube" data-cube-inner>'+
+          face('front','face-front')+face('back','face-back')+face('right','face-right')+face('left','face-left')+face('top','face-top')+
+        '</div>'+
+      '</div>'+
+      '<p class="cube-hint">ドラッグして回転できます（底面は表示されません）</p>'+
+    '</div>';
+  }
+  function viewDetailHtml(){
+    var m = modelsList.filter(function(x){ return x.id===currentDetailId; })[0];
+    if(!m){
+      return '<div class="card panel empty-state">記録が見つかりません。<br><button class="btn" style="margin-top:10px;" data-action="nav" data-view="list">記録一覧に戻る</button></div>';
+    }
+    var photos = SLOTS.map(function(s){ return photosList.filter(function(p){ return p.modelId===m.id && p.slot===s.key; })[0]; }).filter(Boolean);
+    var actions = actionsList.filter(function(a){ return a.modelId===m.id; });
+
+    var html = '<div class="stack">';
+    html += '<button class="btn btn-secondary" data-action="nav" data-view="list" style="align-self:flex-start;">&larr; 一覧へ戻る</button>';
+    html += '<div class="card panel stack">';
+    html += '<div><h2 class="section-title" style="font-size:20px;">'+escapeHtml(m.title)+'</h2>';
+    html += '<div class="detail-meta"><span>'+m.date+'</span>'+(m.place?'<span>'+escapeHtml(m.place)+'</span>':'')+'<span>記録者: '+escapeHtml(m.createdBy||'匿名')+'</span></div></div>';
+
+    html += '<label class="toggle-row"><input type="checkbox" id="pinToggle" '+(pinsVisible?'checked':'')+' /> ピン・関係の表示</label>';
+
+    html += photos.length ? cubeHtml(m, photos) : '<p class="section-hint">写真が登録されていません。</p>';
+
+    if(photos.length){
+      html += '<div class="slot-strip">' + photos.map(function(p){
+        var slotDef = SLOTS.filter(function(s){ return s.key===p.slot; })[0];
+        return '<div class="slot-strip-item"><img src="'+blobUrl(p.assetId)+'" alt="" /><span>'+escapeHtml(slotDef.label)+'</span>'+
+          '<button class="btn btn-secondary" data-action="annotate-open" data-slot="'+p.slot+'" data-mode="existing" data-model-id="'+m.id+'">注釈を編集</button>'+
+        '</div>';
+      }).join('') + '</div>';
+    }
+
+    if(m.noticed){ html += '<div><div class="section-title">そのときに気づいたこと</div><p>'+escapeHtml(m.noticed).replace(/\n/g,'<br>')+'</p></div>'; }
+
+    html += '<div><div class="section-title">明日からのアクション</div>';
+    if(actions.length===0){ html += '<p class="section-hint">登録されたアクションはありません。</p>'; }
+    html += '<div class="stack">';
+    actions.forEach(function(a){
+      html += '<div class="action-card"><p class="action-text">'+escapeHtml(a.text)+'</p>';
+      html += '<p class="meta">登録日 '+a.registeredAt+(a.stopped?' ・ 以降のチェックは停止済み':'')+'</p>';
+      html += '<div class="check-row">';
+      CHECK_ORDER.forEach(function(key){
+        var st = checkStatus(a, key);
+        var c = a.checks[key];
+        var canCheck = !c.done && !a.stopped && c.due<=todayStr();
+        html += '<div class="check-chip '+st.cls+'"><span class="check-chip-label">'+CHECK_LABELS[key]+'</span><span>'+st.text+'</span>';
+        if(c.done && c.comment) html += '<p class="check-comment">'+escapeHtml(c.comment)+'</p>';
+        if(canCheck) html += '<button class="btn" data-action="open-check" data-action-id="'+a.id+'" data-key="'+key+'">記録する</button>';
+        html += '</div>';
+      });
+      html += '</div></div>';
+    });
+    html += '</div></div>';
+    html += '</div></div>';
+    return html;
+  }
+  function wireCube(){
+    var scene = document.querySelector('[data-cube]');
+    if(!scene) return;
+    var inner = scene.querySelector('[data-cube-inner]');
+    var state = {rx:-16, ry:-30};
+    inner.style.transform = 'rotateX('+state.rx+'deg) rotateY('+state.ry+'deg)';
+    var dragging = false, moved = false, lastX = 0, lastY = 0;
+    function pos(e){ return {x:e.clientX, y:e.clientY}; }
+    function onDown(e){ dragging = true; moved = false; var p = pos(e); lastX = p.x; lastY = p.y; }
+    function onMove(e){
+      if(!dragging) return;
+      var p = pos(e);
+      var dx = p.x - lastX, dy = p.y - lastY;
+      if(Math.abs(dx) > 3 || Math.abs(dy) > 3) moved = true;
+      lastX = p.x; lastY = p.y;
+      state.ry += dx * 0.4;
+      state.rx -= dy * 0.4;
+      state.rx = Math.max(-89, Math.min(89, state.rx));
+      inner.style.transform = 'rotateX('+state.rx+'deg) rotateY('+state.ry+'deg)';
+      if(moved) e.preventDefault();
+    }
+    function onUp(){
+      if(dragging && moved){
+        var blocker = function(ev){ ev.stopPropagation(); };
+        document.addEventListener('click', blocker, {capture:true, once:true});
+      }
+      dragging = false;
+    }
+    scene.addEventListener('pointerdown', onDown);
+    scene.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+  }
+  function afterDetailRender(){
+    var toggle = document.getElementById('pinToggle');
+    if(toggle) toggle.onchange = function(){ pinsVisible = toggle.checked; renderView(); };
+    wireCube();
+    Array.prototype.forEach.call(document.querySelectorAll('.photo-stage[data-readonly]'), function(stage){
+      var pins = [], rels = [];
+      try{ pins = JSON.parse(stage.getAttribute('data-pins')); }catch(e){}
+      try{ rels = JSON.parse(stage.getAttribute('data-relations')); }catch(e){}
+      Array.prototype.forEach.call(stage.querySelectorAll('.pin-marker'), function(btn){
+        btn.onclick = function(){
+          var pin = pins.filter(function(p){ return p.id===btn.getAttribute('data-pin-id'); })[0];
+          if(pin) openFormDialog({title:pin.name, readonly:true, fields:[{key:'meaning', label:'意味するもの', type:'textarea', value:pin.meaning}]});
+        };
+      });
+      Array.prototype.forEach.call(stage.querySelectorAll('.rel-line'), function(line){
+        line.onclick = function(){
+          var rel = rels.filter(function(r){ return r.id===line.getAttribute('data-rel-id'); })[0];
+          if(rel) openFormDialog({title:'関係', readonly:true, fields:[{key:'meaning', label:'その矢印が意味するもの', type:'textarea', value:rel.meaning}]});
+        };
+      });
+    });
+  }
+
+  /* ---------- rendering: checks dashboard ---------- */
+  function viewChecksHtml(){
+    var due = [];
+    actionsList.forEach(function(a){ dueChecksFor(a).forEach(function(d){ due.push({action:a, key:d.key, due:d.due}); }); });
+    due.sort(function(x,y){ return x.due < y.due ? -1 : 1; });
+
+    var upcoming = [];
+    actionsList.forEach(function(a){
+      if(a.stopped) return;
+      var next = CHECK_ORDER.filter(function(k){ return !a.checks[k].done; })[0];
+      if(next && a.checks[next].due > todayStr()) upcoming.push({action:a, key:next, due:a.checks[next].due});
+    });
+    upcoming.sort(function(x,y){ return x.due < y.due ? -1 : 1; });
+    upcoming = upcoming.slice(0,8);
+
+    var html = '<div class="stack">';
+    html += '<div class="card panel stack"><h2 class="section-title">今すぐチェックが必要なアクション（'+due.length+'）</h2>';
+    if(due.length===0){ html += '<p class="section-hint">現在、期限を迎えているアクションチェックはありません。</p>'; }
+    due.forEach(function(d){
+      html += '<div class="due-item"><div class="info"><b>'+escapeHtml(d.action.modelTitle)+'</b>'+escapeHtml(d.action.text)+' ・ '+CHECK_LABELS[d.key]+'（期日 '+d.due+'）</div>'+
+        '<button class="btn btn-primary" data-action="open-check" data-action-id="'+d.action.id+'" data-key="'+d.key+'">記録する</button>'+
+      '</div>';
+    });
+    html += '</div>';
+
+    html += '<div class="card panel stack"><h2 class="section-title">今後の予定</h2>';
+    if(upcoming.length===0){ html += '<p class="section-hint">予定されているチェックはありません。</p>'; }
+    upcoming.forEach(function(u){
+      html += '<div class="upcoming-item"><span>'+escapeHtml(u.action.modelTitle)+' ・ '+escapeHtml(u.action.text)+'</span><span>'+CHECK_LABELS[u.key]+'（'+u.due+'）</span></div>';
+    });
+    html += '</div></div>';
+    return html;
+  }
+
+  /* ---------- view dispatch ---------- */
+  function renderView(){
+    var el = document.getElementById('view');
+    if(currentView==='calendar'){ el.innerHTML = viewCalendarHtml(); }
+    else if(currentView==='list'){ el.innerHTML = viewListHtml(); }
+    else if(currentView==='new'){ el.innerHTML = viewNewHtml(); afterNewRender(); }
+    else if(currentView==='detail'){ el.innerHTML = viewDetailHtml(); afterDetailRender(); }
+    else if(currentView==='checks'){ el.innerHTML = viewChecksHtml(); }
+    renderNav();
+  }
+  function renderApp(){ renderNav(); renderView(); }
+
+  /* ---------- delegated click handling ---------- */
+  document.getElementById('shell').addEventListener('click', function(e){
+    var el = e.target.closest('[data-action]');
+    if(!el) return;
+    var action = el.getAttribute('data-action');
+    if(action==='nav'){ currentView = el.getAttribute('data-view'); formError=''; renderApp(); }
+    else if(action==='open-detail'){ currentView='detail'; currentDetailId = el.getAttribute('data-id'); renderApp(); }
+    else if(action==='cal-prev'){ calMonth--; if(calMonth<0){calMonth=11; calYear--;} renderView(); }
+    else if(action==='cal-next'){ calMonth++; if(calMonth>11){calMonth=0; calYear++;} renderView(); }
+    else if(action==='cal-today'){ var t=new Date(); calYear=t.getFullYear(); calMonth=t.getMonth(); selectedCalDate=todayStr(); renderView(); }
+    else if(action==='cal-day'){ selectedCalDate = el.getAttribute('data-date'); renderView(); }
+    else if(action==='photo-upload-slot'){ var inp=document.getElementById('file-'+el.getAttribute('data-slot')); if(inp) inp.click(); }
+    else if(action==='photo-remove'){ draft.photos[el.getAttribute('data-slot')] = null; renderView(); }
+    else if(action==='annotate-open'){ openAnnotateForSlot(el.getAttribute('data-slot'), el.getAttribute('data-mode'), el.getAttribute('data-model-id')); }
+    else if(action==='action-add-row'){ draft.actions.push(''); renderView(); }
+    else if(action==='action-remove-row'){ var idx=Number(el.getAttribute('data-idx')); draft.actions.splice(idx,1); if(draft.actions.length===0) draft.actions.push(''); renderView(); }
+    else if(action==='save-new-model'){ doSaveNewModel(); }
+    else if(action==='open-check'){ openCheckForm(el.getAttribute('data-action-id'), el.getAttribute('data-key')); }
+  });
+
+  /* ---------- init ---------- */
+  renderApp();
+  refreshData(false);
+  setInterval(function(){ refreshData(true); }, POLL_INTERVAL_MS);
+})();
+</script>
+</body>
+</html>
