@@ -86,6 +86,7 @@
   .btn-danger-outline{background:transparent; color:var(--danger); border-color:var(--danger);}
   .danger-zone{border-top:1px solid var(--border); padding-top:14px; margin-top:4px;}
   .badge-private{display:inline-block; font-size:11px; font-weight:600; color:var(--text-muted); border:1px solid var(--border); border-radius:99px; padding:1px 8px; vertical-align:middle;}
+  .badge-theme{display:inline-block; font-size:11px; font-weight:600; color:var(--accent-contrast); background:var(--accent); border-radius:99px; padding:1px 8px; vertical-align:middle;}
   .btn:disabled{opacity:.5; cursor:not-allowed;}
   .chip-btn{border:1px solid var(--border); background:var(--surface); border-radius:99px; padding:6px 13px; font-size:13px; color:var(--text-muted);}
   .chip-btn.is-active{background:var(--accent-soft); color:var(--accent); border-color:var(--accent); font-weight:700;}
@@ -282,9 +283,38 @@
   var CHECK_LABELS = {d3:'3日後', w1:'1週間後', m1:'1ヶ月後', m3:'3ヶ月後'};
   var POLL_INTERVAL_MS = 25000;
 
+  /* お題モード用のお題プール。ランダムに1つ選んで、それに沿ったモデルを作ってもらう。 */
+  var THEMES = [
+    '今のあなたを表すモデル',
+    '理想のチームを表すモデル',
+    '最近乗り越えた壁を表すモデル',
+    '3年後になりたい自分を表すモデル',
+    'あなたにとっての「安心」を表すモデル',
+    '今のチームの雰囲気を表すモデル',
+    'あなたを支えているものを表すモデル',
+    '今抱えている課題を表すモデル',
+    'あなたの強みを表すモデル',
+    '理想の職場を表すモデル',
+    'これまでの人生で大切な転機を表すモデル',
+    'あなたにとっての「成長」を表すモデル',
+    '今のあなたのエネルギー源を表すモデル',
+    'チームに足りないものを表すモデル',
+    'あなたが大切にしている価値観を表すモデル',
+    '今の自分の一番の悩みを表すモデル',
+    '理想のリーダー像を表すモデル',
+    'あなたにとっての「挑戦」を表すモデル',
+    '今の自分を動物や生き物で表すなら？を表すモデル',
+    '半年後にどうなっていたいかを表すモデル',
+    'あなたの原点を表すモデル',
+    '今のあなたに必要な休息を表すモデル',
+    'あなたが乗り越えたい恐れを表すモデル',
+    '理想のコミュニティを表すモデル'
+  ];
+
   /* ---------- state ---------- */
   var currentView = 'list';
   var currentDetailId = null;
+  var currentTheme = '';
   var pinsVisible = true;
   var today = new Date();
   var monthYear = today.getFullYear(), monthMonth = today.getMonth(); // 「月ごとの記録一覧」で表示する年月
@@ -298,17 +328,24 @@
   var session = null; // {token, username, displayName}
   var authMode = 'login';
   var authError = '';
+  var authSuccess = '';
   var authBusy = false;
   var recaptchaWidgetId = null;
   var recaptchaApiReady = false;
+  var resetToken = ''; // メール内のパスワード再設定リンク(?reset=...)から読み取ったトークン
   try{
     var savedSession = localStorage.getItem('mol_session');
     if(savedSession) session = JSON.parse(savedSession);
   }catch(e){ session = null; }
+  try{
+    var urlParams = new URLSearchParams(window.location.search);
+    var resetParam = urlParams.get('reset');
+    if(resetParam){ resetToken = resetParam; authMode = 'reset'; }
+  }catch(e){ /* URLSearchParams非対応の古いブラウザでは無視 */ }
 
   function freshDraft(){
     return {
-      title:'', date:todayStr(), place:'', noticed:'', story:'', isPublic:true,
+      title:'', date:todayStr(), place:'', noticed:'', story:'', isPublic:true, theme:'',
       photos:{front:null,right:null,left:null,top:null,back:null},
       actions:['']
     };
@@ -477,15 +514,33 @@
   function persistSession(){ try{ localStorage.setItem('mol_session', JSON.stringify(session)); }catch(e){} }
   function authHtml(){
     var html = '<div class="card panel stack auth-card">';
+    if(authMode === 'reset'){
+      html += '<h2 class="section-title">パスワードの再設定</h2>';
+      if(authError) html += '<div class="notice error">'+escapeHtml(authError)+'</div>';
+      if(authSuccess) html += '<div class="notice">'+escapeHtml(authSuccess)+'</div>';
+      html += '<label class="field"><span>新しいパスワード（6文字以上）</span><input type="password" id="auth-newpassword" autocomplete="new-password" /></label>';
+      html += '<label class="field"><span>新しいパスワード（確認）</span><input type="password" id="auth-newpassword2" autocomplete="new-password" /></label>';
+      html += '<button type="button" class="btn btn-primary" data-action="do-reset-password" '+(authBusy?'disabled':'')+'>'+(authBusy?'処理中…':'パスワードを再設定する')+'</button>';
+      html += '<button type="button" class="btn-danger-text" data-action="auth-mode" data-mode="login" style="align-self:flex-start;">ログイン画面に戻る</button>';
+      html += '</div>';
+      return html;
+    }
     html += '<div class="auth-tabs"><button type="button" class="chip-btn'+(authMode==='login'?' is-active':'')+'" data-action="auth-mode" data-mode="login">ログイン</button>';
     html += '<button type="button" class="chip-btn'+(authMode==='register'?' is-active':'')+'" data-action="auth-mode" data-mode="register">新規登録</button></div>';
     if(authError) html += '<div class="notice error">'+escapeHtml(authError)+'</div>';
+    if(authSuccess) html += '<div class="notice">'+escapeHtml(authSuccess)+'</div>';
     if(authMode === 'login'){
-      html += '<label class="field"><span>ユーザー名</span><input type="text" id="auth-username" autocomplete="username" /></label>';
+      html += '<label class="field"><span>メールアドレス</span><input type="email" id="auth-username" autocomplete="username" /></label>';
       html += '<label class="field"><span>パスワード</span><input type="password" id="auth-password" autocomplete="current-password" /></label>';
       html += '<button type="button" class="btn btn-primary" data-action="do-login" '+(authBusy?'disabled':'')+'>'+(authBusy?'処理中…':'ログイン')+'</button>';
+      html += '<button type="button" class="btn-danger-text" data-action="auth-mode" data-mode="forgot" style="align-self:flex-start;">パスワードをお忘れですか？</button>';
+    } else if(authMode === 'forgot'){
+      html += '<p class="section-hint">登録済みのメールアドレスを入力してください。パスワード再設定用のリンクをお送りします。</p>';
+      html += '<label class="field"><span>メールアドレス</span><input type="email" id="auth-forgot-email" autocomplete="username" /></label>';
+      html += '<button type="button" class="btn btn-primary" data-action="do-request-reset" '+(authBusy?'disabled':'')+'>'+(authBusy?'送信中…':'再設定用のリンクを送る')+'</button>';
+      html += '<button type="button" class="btn-danger-text" data-action="auth-mode" data-mode="login" style="align-self:flex-start;">ログイン画面に戻る</button>';
     } else {
-      html += '<label class="field"><span>ユーザー名（半角英数字）</span><input type="text" id="auth-username" autocomplete="username" /></label>';
+      html += '<label class="field"><span>メールアドレス</span><input type="email" id="auth-username" autocomplete="username" /></label>';
       html += '<label class="field"><span>表示名</span><input type="text" id="auth-displayname" placeholder="記録に表示される名前" /></label>';
       html += '<label class="field"><span>パスワード（6文字以上）</span><input type="password" id="auth-password" autocomplete="new-password" /></label>';
       html += '<label class="field"><span>パスワード（確認）</span><input type="password" id="auth-password2" autocomplete="new-password" /></label>';
@@ -497,10 +552,16 @@
     return html;
   }
   function afterAuthRender(){
-    var u = document.getElementById('auth-username'); if(u) u.focus();
+    var focusEl = document.getElementById('auth-username') || document.getElementById('auth-forgot-email') || document.getElementById('auth-newpassword');
+    if(focusEl) focusEl.focus();
     Array.prototype.forEach.call(document.querySelectorAll('#view input'), function(el){
       el.addEventListener('keydown', function(e){
-        if(e.key === 'Enter'){ e.preventDefault(); if(authMode==='login') doLogin(); else doRegister(); }
+        if(e.key !== 'Enter') return;
+        e.preventDefault();
+        if(authMode==='login') doLogin();
+        else if(authMode==='register') doRegister();
+        else if(authMode==='forgot') doRequestPasswordReset();
+        else if(authMode==='reset') doResetPassword();
       });
     });
     if(authMode === 'register'){
@@ -508,11 +569,12 @@
       renderRecaptchaIfNeeded();
     }
   }
+  var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   async function doLogin(){
     var username = document.getElementById('auth-username').value.trim();
     var password = document.getElementById('auth-password').value;
-    if(!username || !password){ authError='ユーザー名とパスワードを入力してください。'; renderApp(); return; }
-    authBusy = true; authError=''; renderApp();
+    if(!username || !password){ authError='メールアドレスとパスワードを入力してください。'; renderApp(); return; }
+    authBusy = true; authError=''; authSuccess=''; renderApp();
     try{
       var data = await apiCall('login', {username:username, password:password});
       session = data; persistSession();
@@ -528,12 +590,13 @@
     var displayName = document.getElementById('auth-displayname').value.trim();
     var password = document.getElementById('auth-password').value;
     var password2 = document.getElementById('auth-password2').value;
-    if(!username || !password){ authError='ユーザー名とパスワードを入力してください。'; renderApp(); return; }
+    if(!username || !password){ authError='メールアドレスとパスワードを入力してください。'; renderApp(); return; }
+    if(!EMAIL_RE.test(username)){ authError='メールアドレスの形式で入力してください。'; renderApp(); return; }
     if(password.length < 6){ authError='パスワードは6文字以上にしてください。'; renderApp(); return; }
     if(password !== password2){ authError='パスワードが一致しません。'; renderApp(); return; }
     var token = (window.grecaptcha && recaptchaWidgetId!==null) ? grecaptcha.getResponse(recaptchaWidgetId) : '';
     if(RECAPTCHA_SITE_KEY && !token){ authError='「ロボットではありません」にチェックを入れてください。'; renderApp(); return; }
-    authBusy = true; authError=''; renderApp();
+    authBusy = true; authError=''; authSuccess=''; renderApp();
     try{
       var data = await apiCall('register', {username:username, password:password, displayName:displayName, recaptchaToken:token});
       session = data; persistSession();
@@ -544,6 +607,43 @@
       authBusy = false; authError = e.message;
       if(window.grecaptcha && recaptchaWidgetId!==null) grecaptcha.reset(recaptchaWidgetId);
       renderApp();
+    }
+  }
+  async function doRequestPasswordReset(){
+    var emailEl = document.getElementById('auth-forgot-email');
+    var email = emailEl ? emailEl.value.trim() : '';
+    if(!email){ authError='メールアドレスを入力してください。'; renderApp(); return; }
+    authBusy = true; authError=''; authSuccess=''; renderApp();
+    try{
+      await apiCall('requestPasswordReset', {email:email});
+      authBusy = false;
+      authSuccess = '入力されたメールアドレス宛にパスワード再設定用のリンクを送信しました（該当するアカウントが無い場合はメールは届きません）。メールをご確認ください。';
+      renderApp();
+    }catch(e){
+      authBusy = false; authError = e.message; renderApp();
+    }
+  }
+  async function doResetPassword(){
+    var pw = document.getElementById('auth-newpassword').value;
+    var pw2 = document.getElementById('auth-newpassword2').value;
+    if(!pw || !pw2){ authError='新しいパスワードを入力してください。'; renderApp(); return; }
+    if(pw.length < 6){ authError='パスワードは6文字以上にしてください。'; renderApp(); return; }
+    if(pw !== pw2){ authError='パスワードが一致しません。'; renderApp(); return; }
+    authBusy = true; authError=''; authSuccess=''; renderApp();
+    try{
+      await apiCall('resetPassword', {token:resetToken, newPassword:pw});
+      authBusy = false;
+      resetToken = '';
+      try{
+        var url = new URL(window.location.href);
+        url.searchParams.delete('reset');
+        window.history.replaceState({}, '', url.toString());
+      }catch(e){}
+      authMode = 'login';
+      authSuccess = 'パスワードを再設定しました。新しいパスワードでログインしてください。';
+      renderApp();
+    }catch(e){
+      authBusy = false; authError = e.message; renderApp();
     }
   }
   function doLogout(){
@@ -828,6 +928,7 @@
     var tabs = [
       {key:'list', label:'記録一覧'},
       {key:'new', label:'新規記録'},
+      {key:'theme', label:'お題モード'},
       {key:'checks', label:'アクションチェック', badge:due}
     ];
     document.getElementById('tabs').innerHTML = tabs.map(function(t){
@@ -836,6 +937,33 @@
     var notice = document.getElementById('globalNotice');
     if(notice) notice.innerHTML = API_URL ? '' : '<div class="notice">API_URLが未設定です。「セットアップ手順.md」に沿ってApps ScriptウェブアプリのURLをこのページ(index.html)先頭のAPI_URLに設定してください。</div>';
     updateSyncNote(false);
+  }
+
+  /* ---------- rendering: お題モード ---------- */
+  function viewThemeHtml(){
+    var html = '<div class="stack">';
+    html += '<div class="card panel stack">';
+    html += '<h2 class="section-title">お題モード</h2>';
+    html += '<p class="section-hint">ランダムなお題を引いて、そのお題に沿ってモデルを作り、写真で記録していくモードです。</p>';
+    if(currentTheme){
+      html += '<div class="notice"><div style="font-size:12px; color:var(--text-muted); margin-bottom:4px;">今回のお題</div><div style="font-size:18px; font-weight:700;">'+escapeHtml(currentTheme)+'</div></div>';
+      html += '<div class="row">';
+      html += '<button type="button" class="btn btn-primary" data-action="theme-start-record">このお題でモデルを記録する</button>';
+      html += '<button type="button" class="btn btn-secondary" data-action="theme-draw">お題を引き直す</button>';
+      html += '</div>';
+    } else {
+      html += '<button type="button" class="btn btn-primary" data-action="theme-draw" style="align-self:flex-start;">お題を引く</button>';
+    }
+    html += '</div>';
+
+    var themeModels = modelsList.filter(function(m){ return !!m.theme; }).sort(function(a,b){ return a.date < b.date ? 1 : -1; });
+    html += '<div><div class="section-title">これまでのお題モードの記録</div>';
+    if(themeModels.length===0){ html += '<div class="card panel empty-state">まだお題モードの記録はありません。</div>'; }
+    else { html += themeModels.map(modelCardHtml).join(''); }
+    html += '</div>';
+
+    html += '</div>';
+    return html;
   }
 
   /* ---------- rendering: 月ごとの記録一覧(記録詳細のリンクから遷移) ---------- */
@@ -857,7 +985,7 @@
     var thumb = m.coverAssetId ? '<img src="'+blobUrl(m.coverAssetId)+'" alt="" />' : 'no photo';
     return '<div class="card model-card" data-action="open-detail" data-id="'+m.id+'">'+
       '<div class="model-thumb">'+thumb+'</div>'+
-      '<div><h3>'+escapeHtml(m.title)+(m.isPublic===false?' <span class="badge-private">非公開</span>':'')+'</h3>'+
+      '<div><h3>'+escapeHtml(m.title)+(m.isPublic===false?' <span class="badge-private">非公開</span>':'')+(m.theme?' <span class="badge-theme">お題</span>':'')+'</h3>'+
       '<div class="meta">'+m.date+(m.place?' ・ '+escapeHtml(m.place):'')+'</div>'+
       '<div class="meta">記録者: '+escapeHtml(m.createdBy||'匿名')+'</div></div>'+
     '</div>';
@@ -891,6 +1019,7 @@
     html += '<h2 class="section-title">新規モデル記録</h2>';
     if(!API_URL) html += '<div class="notice">API_URLが未設定です。保存するにはindex.html内のAPI_URLにApps ScriptウェブアプリのURLを設定してください。</div>';
     if(formError) html += '<div class="notice error">'+escapeHtml(formError)+'</div>';
+    if(draft.theme){ html += '<div class="notice">お題モードで記録中です。お題: <strong>'+escapeHtml(draft.theme)+'</strong></div>'; }
     html += '<div class="field-grid">';
     html += '<label class="field"><span>タイトル</span><input type="text" id="f-title" value="'+escapeHtml(draft.title)+'" placeholder="例）チームの未来像モデル" /></label>';
     html += '<label class="field"><span>日付</span><input type="date" id="f-date" value="'+draft.date+'" /></label>';
@@ -961,7 +1090,8 @@
       var cover = coverSlot ? draft.photos[coverSlot.key] : null;
       var modelRes = await apiCall('createModel', {model:{
         title:title, date:date, place:draft.place.trim(), noticed:draft.noticed.trim(),
-        story:draft.story.trim(), coverAssetId: cover ? cover.assetId : '', isPublic: draft.isPublic !== false
+        story:draft.story.trim(), coverAssetId: cover ? cover.assetId : '', isPublic: draft.isPublic !== false,
+        theme: draft.theme || ''
       }});
       var modelId = modelRes.id;
       var writes = [];
@@ -1070,7 +1200,7 @@
     if(m.isPublic===false){ html += '<p class="section-hint">この記録は非公開に設定されています。あなた以外には表示されません。</p>'; }
     html += '</div>';
 
-    if(m.story){ html += '<div><div class="section-title">モデルが示すストーリー(全体の概要)</div><p>'+escapeHtml(m.story).replace(/\n/g,'<br>')+'</p></div>'; }
+    if(m.theme){ html += '<div class="notice">お題モードの記録です。お題: <strong>'+escapeHtml(m.theme)+'</strong></div>'; }
 
     html += '<label class="toggle-row"><input type="checkbox" id="pinToggle" '+(pinsVisible?'checked':'')+' /> ピン・関係の表示</label>';
 
@@ -1084,6 +1214,8 @@
         '</div>';
       }).join('') + '</div>';
     }
+
+    if(m.story){ html += '<div><div class="section-title">モデルが示すストーリー(全体の概要)</div><p>'+escapeHtml(m.story).replace(/\n/g,'<br>')+'</p></div>'; }
 
     if(m.noticed){ html += '<div><div class="section-title">そのときに気づいたこと</div><p>'+escapeHtml(m.noticed).replace(/\n/g,'<br>')+'</p></div>'; }
 
@@ -1215,7 +1347,7 @@
   /* ---------- view dispatch ---------- */
   function renderView(){
     var el = document.getElementById('view');
-    if(!session){
+    if(!session || authMode==='reset'){
       document.getElementById('tabs').innerHTML = '';
       document.getElementById('syncNote').textContent = '';
       document.getElementById('globalNotice').innerHTML = API_URL ? '' : '<div class="notice">API_URLが未設定です。「セットアップ手順.md」に沿ってApps ScriptウェブアプリのURLをこのページ(index.html)先頭のAPI_URLに設定してください。</div>';
@@ -1227,6 +1359,7 @@
     if(currentView==='month'){ el.innerHTML = viewMonthHtml(); }
     else if(currentView==='list'){ el.innerHTML = viewListHtml(); }
     else if(currentView==='new'){ el.innerHTML = viewNewHtml(); afterNewRender(); }
+    else if(currentView==='theme'){ el.innerHTML = viewThemeHtml(); }
     else if(currentView==='detail'){ el.innerHTML = viewDetailHtml(); afterDetailRender(); }
     else if(currentView==='checks'){ el.innerHTML = viewChecksHtml(); }
     renderNav();
@@ -1239,9 +1372,11 @@
     var el = e.target.closest('[data-action]');
     if(!el) return;
     var action = el.getAttribute('data-action');
-    if(action==='auth-mode'){ authMode = el.getAttribute('data-mode'); authError=''; renderApp(); }
+    if(action==='auth-mode'){ authMode = el.getAttribute('data-mode'); authError=''; authSuccess=''; renderApp(); }
     else if(action==='do-login'){ doLogin(); }
     else if(action==='do-register'){ doRegister(); }
+    else if(action==='do-request-reset'){ doRequestPasswordReset(); }
+    else if(action==='do-reset-password'){ doResetPassword(); }
     else if(action==='logout'){ doLogout(); }
     else if(action==='nav'){ currentView = el.getAttribute('data-view'); formError=''; renderApp(); }
     else if(action==='open-detail'){ currentView='detail'; currentDetailId = el.getAttribute('data-id'); renderApp(); }
@@ -1257,6 +1392,8 @@
     else if(action==='action-add-row'){ draft.actions.push(''); renderView(); }
     else if(action==='action-remove-row'){ var idx=Number(el.getAttribute('data-idx')); draft.actions.splice(idx,1); if(draft.actions.length===0) draft.actions.push(''); renderView(); }
     else if(action==='save-new-model'){ doSaveNewModel(); }
+    else if(action==='theme-draw'){ currentTheme = THEMES[Math.floor(Math.random()*THEMES.length)]; renderView(); }
+    else if(action==='theme-start-record'){ draft = freshDraft(); draft.theme = currentTheme; draft.title = currentTheme; currentView='new'; renderApp(); }
     else if(action==='open-check'){ openCheckForm(el.getAttribute('data-action-id'), el.getAttribute('data-key')); }
   });
 
