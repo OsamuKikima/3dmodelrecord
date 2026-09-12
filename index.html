@@ -81,6 +81,11 @@
   .btn-primary:hover{opacity:.92;}
   .btn-secondary{background:transparent;}
   .btn-danger-text{background:none; border:none; color:var(--danger); font-size:12px; text-decoration:underline; padding:2px 4px;}
+  .btn-danger{background:var(--danger); color:#fff; border-color:var(--danger);}
+  .btn-danger:hover{opacity:.9;}
+  .btn-danger-outline{background:transparent; color:var(--danger); border-color:var(--danger);}
+  .danger-zone{border-top:1px solid var(--border); padding-top:14px; margin-top:4px;}
+  .badge-private{display:inline-block; font-size:11px; font-weight:600; color:var(--text-muted); border:1px solid var(--border); border-radius:99px; padding:1px 8px; vertical-align:middle;}
   .btn:disabled{opacity:.5; cursor:not-allowed;}
   .chip-btn{border:1px solid var(--border); background:var(--surface); border-radius:99px; padding:6px 13px; font-size:13px; color:var(--text-muted);}
   .chip-btn.is-active{background:var(--accent-soft); color:var(--accent); border-color:var(--accent); font-weight:700;}
@@ -278,12 +283,12 @@
   var POLL_INTERVAL_MS = 25000;
 
   /* ---------- state ---------- */
-  var currentView = 'calendar';
+  var currentView = 'list';
   var currentDetailId = null;
   var pinsVisible = true;
   var today = new Date();
-  var calYear = today.getFullYear(), calMonth = today.getMonth();
-  var selectedCalDate = todayStr();
+  var monthYear = today.getFullYear(), monthMonth = today.getMonth(); // 「月ごとの記録一覧」で表示する年月
+  var deleteConfirmId = null;
   var modelsList = [], photosList = [], actionsList = [];
   var saving = false;
   var formError = '';
@@ -303,7 +308,7 @@
 
   function freshDraft(){
     return {
-      title:'', date:todayStr(), place:'', noticed:'',
+      title:'', date:todayStr(), place:'', noticed:'', story:'', isPublic:true,
       photos:{front:null,right:null,left:null,top:null,back:null},
       actions:['']
     };
@@ -440,7 +445,7 @@
   function forceLogout(){
     session = null;
     try{ localStorage.removeItem('mol_session'); }catch(e){}
-    currentView = 'calendar';
+    currentView = 'list';
     authMode = 'login';
     authError = 'セッションの有効期限が切れました。再度ログインしてください。';
     renderApp();
@@ -511,7 +516,7 @@
     try{
       var data = await apiCall('login', {username:username, password:password});
       session = data; persistSession();
-      authBusy = false; currentView = 'calendar';
+      authBusy = false; currentView = 'list';
       renderApp();
       refreshData(false);
     }catch(e){
@@ -532,7 +537,7 @@
     try{
       var data = await apiCall('register', {username:username, password:password, displayName:displayName, recaptchaToken:token});
       session = data; persistSession();
-      authBusy = false; currentView = 'calendar';
+      authBusy = false; currentView = 'list';
       renderApp();
       refreshData(false);
     }catch(e){
@@ -545,7 +550,7 @@
     var tok = session && session.token;
     session = null;
     try{ localStorage.removeItem('mol_session'); }catch(e){}
-    currentView = 'calendar';
+    currentView = 'list';
     renderApp();
     if(tok) apiCall('logout', {token:tok}).catch(function(){});
   }
@@ -740,7 +745,7 @@
           var p = localPins.filter(function(pp){ return pp.id === markerBtn.getAttribute('data-pin-id'); })[0];
           if(p) openFormDialog({
             title:'部分を編集',
-            fields:[{key:'name', label:'その部分の名称', value:p.name},{key:'meaning', label:'その部分の意味するもの', type:'textarea', value:p.meaning}],
+            fields:[{key:'name', label:'どのブロック・表現を指している？', value:p.name},{key:'meaning', label:'その部分の意味するもの', type:'textarea', value:p.meaning}],
             onSubmit:function(vals){ if(!vals.name.trim()) return; p.name=vals.name.trim(); p.meaning=vals.meaning.trim(); commit(); render(); }
           });
         } else {
@@ -748,8 +753,8 @@
           var x = Math.min(100, Math.max(0, (e.clientX-rect.left)/rect.width*100));
           var y = Math.min(100, Math.max(0, (e.clientY-rect.top)/rect.height*100));
           openFormDialog({
-            title:'部分を登録',
-            fields:[{key:'name', label:'その部分の名称'},{key:'meaning', label:'その部分の意味するもの', type:'textarea'}],
+            title:'部分の意味を記録する',
+            fields:[{key:'name', label:'どのブロック・表現を指している？'},{key:'meaning', label:'その部分の意味するもの', type:'textarea'}],
             onSubmit:function(vals){ if(!vals.name.trim()) return; localPins.push({id:uid(), x:x, y:y, name:vals.name.trim(), meaning:vals.meaning.trim()}); commit(); render(); }
           });
         }
@@ -821,7 +826,6 @@
   function renderNav(){
     var due = computeDueCount();
     var tabs = [
-      {key:'calendar', label:'カレンダー'},
       {key:'list', label:'記録一覧'},
       {key:'new', label:'新規記録'},
       {key:'checks', label:'アクションチェック', badge:due}
@@ -834,47 +838,16 @@
     updateSyncNote(false);
   }
 
-  /* ---------- rendering: calendar ---------- */
-  function viewCalendarHtml(){
-    var first = new Date(calYear, calMonth, 1);
-    var startDow = first.getDay();
-    var daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
-    var prevDays = new Date(calYear, calMonth, 0).getDate();
-    var cells = [];
-    for(var i=startDow-1;i>=0;i--) cells.push({outside:true, day:prevDays-i});
-    for(var d=1; d<=daysInMonth; d++) cells.push({outside:false, day:d});
-    while(cells.length % 7 !== 0) cells.push({outside:true, day:cells.length - (startDow+daysInMonth) + 1});
-
-    var todayS = todayStr();
-    var byDate = {};
-    modelsList.forEach(function(m){ (byDate[m.date] = byDate[m.date] || []).push(m); });
-
-    var dowLabels = ['日','月','火','水','木','金','土'];
-    var html = '<div class="card panel stack">';
-    html += '<div class="cal-head"><button class="btn" data-action="cal-prev">&lsaquo; 前の月</button><span class="cal-title">'+calYear+'年 '+(calMonth+1)+'月</span><button class="btn" data-action="cal-next">次の月 &rsaquo;</button><button class="btn btn-secondary" data-action="cal-today">今月</button></div>';
-    html += '<div class="cal-grid">';
-    dowLabels.forEach(function(l){ html += '<div class="cal-dow">'+l+'</div>'; });
-    cells.forEach(function(c){
-      if(c.outside){ html += '<div class="cal-cell is-outside"><span class="cal-daynum">'+c.day+'</span></div>'; return; }
-      var dateStr = calYear+'-'+pad(calMonth+1)+'-'+pad(c.day);
-      var items = byDate[dateStr] || [];
-      var cls = 'cal-cell';
-      if(dateStr===todayS) cls += ' is-today';
-      if(dateStr===selectedCalDate) cls += ' is-selected';
-      html += '<button type="button" class="'+cls+'" data-action="cal-day" data-date="'+dateStr+'">';
-      html += '<span class="cal-daynum">'+c.day+'</span>';
-      items.slice(0,2).forEach(function(m){ html += '<span class="cal-chip"><span class="cal-dot"></span>'+escapeHtml(m.title)+'</span>'; });
-      if(items.length>2) html += '<span class="cal-chip">+'+(items.length-2)+'</span>';
-      html += '</button>';
-    });
-    html += '</div>';
-
-    var dayItems = byDate[selectedCalDate] || [];
-    html += '<div class="cal-day-list stack">';
-    html += '<h3 class="section-title">'+selectedCalDate+' の記録 ('+dayItems.length+')</h3>';
-    if(dayItems.length===0){ html += '<p class="section-hint">この日の記録はまだありません。</p>'; }
-    dayItems.forEach(function(m){ html += modelCardHtml(m); });
-    html += '</div>';
+  /* ---------- rendering: 月ごとの記録一覧(記録詳細のリンクから遷移) ---------- */
+  function viewMonthHtml(){
+    var items = modelsList.filter(function(m){
+      var d = new Date(m.date);
+      return d.getFullYear()===monthYear && d.getMonth()===monthMonth;
+    }).sort(function(a,b){ return a.date < b.date ? 1 : -1; });
+    var html = '<div class="stack">';
+    html += '<div class="cal-head"><button class="btn" data-action="month-prev">&lsaquo; 前の月</button><span class="cal-title">'+monthYear+'年 '+(monthMonth+1)+'月の記録</span><button class="btn" data-action="month-next">次の月 &rsaquo;</button></div>';
+    if(items.length===0){ html += '<div class="card panel empty-state">この月の記録はまだありません。</div>'; }
+    else { items.forEach(function(m){ html += modelCardHtml(m); }); }
     html += '</div>';
     return html;
   }
@@ -884,7 +857,7 @@
     var thumb = m.coverAssetId ? '<img src="'+blobUrl(m.coverAssetId)+'" alt="" />' : 'no photo';
     return '<div class="card model-card" data-action="open-detail" data-id="'+m.id+'">'+
       '<div class="model-thumb">'+thumb+'</div>'+
-      '<div><h3>'+escapeHtml(m.title)+'</h3>'+
+      '<div><h3>'+escapeHtml(m.title)+(m.isPublic===false?' <span class="badge-private">非公開</span>':'')+'</h3>'+
       '<div class="meta">'+m.date+(m.place?' ・ '+escapeHtml(m.place):'')+'</div>'+
       '<div class="meta">記録者: '+escapeHtml(m.createdBy||'匿名')+'</div></div>'+
     '</div>';
@@ -925,6 +898,10 @@
     html += '</div>';
     html += '<p class="section-hint">記録者: '+escapeHtml(session.displayName)+'</p>';
 
+    html += '<label class="field"><span>モデルが示すストーリー（全体の概要）</span><textarea id="f-story" rows="3" placeholder="このモデル全体で表現しているストーリーや世界観を書きます">'+escapeHtml(draft.story)+'</textarea></label>';
+
+    html += '<label class="toggle-row"><input type="checkbox" id="f-ispublic" '+(draft.isPublic?'checked':'')+' /> この記録を他の人にも公開する（チェックを外すと自分だけに表示されます）</label>';
+
     html += '<div><div class="section-title">写真（最低1枚・最大5方向）</div><div class="section-hint">正面・右・左・上・背面のうち、撮影した角度だけ登録すれば構いません。</div>';
     html += '<div class="slot-grid">' + SLOTS.map(slotCardHtml).join('') + '</div></div>';
 
@@ -948,6 +925,8 @@
     var dt = document.getElementById('f-date'); if(dt) dt.oninput = function(e){ draft.date = e.target.value; };
     var pl = document.getElementById('f-place'); if(pl) pl.oninput = function(e){ draft.place = e.target.value; };
     var nt = document.getElementById('f-noticed'); if(nt) nt.oninput = function(e){ draft.noticed = e.target.value; };
+    var st = document.getElementById('f-story'); if(st) st.oninput = function(e){ draft.story = e.target.value; };
+    var ispub = document.getElementById('f-ispublic'); if(ispub) ispub.onchange = function(e){ draft.isPublic = e.target.checked; };
     Array.prototype.forEach.call(document.querySelectorAll('.action-row-input'), function(el){
       el.oninput = function(e){ draft.actions[Number(el.getAttribute('data-idx'))] = e.target.value; };
     });
@@ -982,7 +961,7 @@
       var cover = coverSlot ? draft.photos[coverSlot.key] : null;
       var modelRes = await apiCall('createModel', {model:{
         title:title, date:date, place:draft.place.trim(), noticed:draft.noticed.trim(),
-        coverAssetId: cover ? cover.assetId : ''
+        story:draft.story.trim(), coverAssetId: cover ? cover.assetId : '', isPublic: draft.isPublic !== false
       }});
       var modelId = modelRes.id;
       var writes = [];
@@ -1007,6 +986,23 @@
       console.error(e);
       saving = false;
       formError = '保存に失敗しました: '+e.message;
+      renderView();
+    }
+  }
+
+  var deleteBusy = false;
+  var deleteError = '';
+  async function doDeleteModel(id){
+    deleteBusy = true; deleteError=''; renderView();
+    try{
+      await apiCall('deleteModel', {id:id});
+      deleteConfirmId = null; deleteBusy = false;
+      currentView = 'list'; currentDetailId = null;
+      await refreshData(true);
+    }catch(e){
+      console.error(e);
+      deleteBusy = false;
+      deleteError = '削除に失敗しました: '+e.message;
       renderView();
     }
   }
@@ -1060,11 +1056,21 @@
     var photos = SLOTS.map(function(s){ return photosList.filter(function(p){ return p.modelId===m.id && p.slot===s.key; })[0]; }).filter(Boolean);
     var actions = actionsList.filter(function(a){ return a.modelId===m.id; });
 
+    var mDate = new Date(m.date);
+    var monthLinkY = mDate.getFullYear(), monthLinkM = mDate.getMonth();
+
     var html = '<div class="stack">';
+    html += '<div class="row" style="justify-content:space-between; align-items:center;">';
     html += '<button class="btn btn-secondary" data-action="nav" data-view="list" style="align-self:flex-start;">&larr; 一覧へ戻る</button>';
+    html += '<button class="btn btn-secondary" data-action="open-month" data-year="'+monthLinkY+'" data-month="'+monthLinkM+'">'+monthLinkY+'年'+(monthLinkM+1)+'月の記録一覧</button>';
+    html += '</div>';
     html += '<div class="card panel stack">';
-    html += '<div><h2 class="section-title" style="font-size:20px;">'+escapeHtml(m.title)+'</h2>';
-    html += '<div class="detail-meta"><span>'+m.date+'</span>'+(m.place?'<span>'+escapeHtml(m.place)+'</span>':'')+'<span>記録者: '+escapeHtml(m.createdBy||'匿名')+'</span></div></div>';
+    html += '<div><h2 class="section-title" style="font-size:20px;">'+escapeHtml(m.title)+(m.isPublic===false?' <span class="badge-private">非公開</span>':'')+'</h2>';
+    html += '<div class="detail-meta"><span>'+m.date+'</span>'+(m.place?'<span>'+escapeHtml(m.place)+'</span>':'')+'<span>記録者: '+escapeHtml(m.createdBy||'匿名')+'</span></div>';
+    if(m.isPublic===false){ html += '<p class="section-hint">この記録は非公開に設定されています。あなた以外には表示されません。</p>'; }
+    html += '</div>';
+
+    if(m.story){ html += '<div><div class="section-title">モデルが示すストーリー(全体の概要)</div><p>'+escapeHtml(m.story).replace(/\n/g,'<br>')+'</p></div>'; }
 
     html += '<label class="toggle-row"><input type="checkbox" id="pinToggle" '+(pinsVisible?'checked':'')+' /> ピン・関係の表示</label>';
 
@@ -1100,6 +1106,20 @@
       html += '</div></div>';
     });
     html += '</div></div>';
+
+    html += '<div class="danger-zone">';
+    if(deleteError){ html += '<div class="notice error">'+escapeHtml(deleteError)+'</div>'; }
+    if(deleteConfirmId === m.id){
+      html += '<p class="section-hint">この記録(写真・アクションを含む)を削除します。この操作は取り消せません。本当によろしいですか？</p>';
+      html += '<div class="row">';
+      html += '<button class="btn btn-danger" data-action="delete-model-confirm" data-id="'+m.id+'" '+(deleteBusy?'disabled':'')+'>'+(deleteBusy?'削除中…':'削除する')+'</button>';
+      html += '<button class="btn btn-secondary" data-action="delete-model-cancel">キャンセル</button>';
+      html += '</div>';
+    } else {
+      html += '<button class="btn btn-danger-outline" data-action="delete-model" data-id="'+m.id+'">この記録を削除する</button>';
+    }
+    html += '</div>';
+
     html += '</div></div>';
     return html;
   }
@@ -1204,7 +1224,7 @@
       updateUserBar();
       return;
     }
-    if(currentView==='calendar'){ el.innerHTML = viewCalendarHtml(); }
+    if(currentView==='month'){ el.innerHTML = viewMonthHtml(); }
     else if(currentView==='list'){ el.innerHTML = viewListHtml(); }
     else if(currentView==='new'){ el.innerHTML = viewNewHtml(); afterNewRender(); }
     else if(currentView==='detail'){ el.innerHTML = viewDetailHtml(); afterDetailRender(); }
@@ -1225,10 +1245,12 @@
     else if(action==='logout'){ doLogout(); }
     else if(action==='nav'){ currentView = el.getAttribute('data-view'); formError=''; renderApp(); }
     else if(action==='open-detail'){ currentView='detail'; currentDetailId = el.getAttribute('data-id'); renderApp(); }
-    else if(action==='cal-prev'){ calMonth--; if(calMonth<0){calMonth=11; calYear--;} renderView(); }
-    else if(action==='cal-next'){ calMonth++; if(calMonth>11){calMonth=0; calYear++;} renderView(); }
-    else if(action==='cal-today'){ var t=new Date(); calYear=t.getFullYear(); calMonth=t.getMonth(); selectedCalDate=todayStr(); renderView(); }
-    else if(action==='cal-day'){ selectedCalDate = el.getAttribute('data-date'); renderView(); }
+    else if(action==='open-month'){ monthYear=Number(el.getAttribute('data-year')); monthMonth=Number(el.getAttribute('data-month')); currentView='month'; renderApp(); }
+    else if(action==='month-prev'){ monthMonth--; if(monthMonth<0){monthMonth=11; monthYear--;} renderView(); }
+    else if(action==='month-next'){ monthMonth++; if(monthMonth>11){monthMonth=0; monthYear++;} renderView(); }
+    else if(action==='delete-model'){ deleteConfirmId = el.getAttribute('data-id'); renderView(); }
+    else if(action==='delete-model-cancel'){ deleteConfirmId = null; renderView(); }
+    else if(action==='delete-model-confirm'){ doDeleteModel(el.getAttribute('data-id')); }
     else if(action==='photo-upload-slot'){ var inp=document.getElementById('file-'+el.getAttribute('data-slot')); if(inp) inp.click(); }
     else if(action==='photo-remove'){ draft.photos[el.getAttribute('data-slot')] = null; renderView(); }
     else if(action==='annotate-open'){ openAnnotateForSlot(el.getAttribute('data-slot'), el.getAttribute('data-mode'), el.getAttribute('data-model-id')); }
