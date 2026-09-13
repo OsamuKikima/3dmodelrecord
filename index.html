@@ -59,6 +59,8 @@
   .masthead{display:flex; align-items:baseline; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:18px;}
   .masthead h1{font-size:clamp(22px,4vw,30px); font-weight:600; letter-spacing:.02em;}
   .masthead .sub{font-family:var(--font-mono); font-size:12px; color:var(--text-muted); letter-spacing:.04em;}
+  .manual-link{display:inline-block; margin-top:6px; font-size:12.5px; font-weight:600; text-decoration:none; color:var(--accent);}
+  .manual-link:hover{text-decoration:underline;}
 
   nav.tabs{display:flex; gap:6px; overflow-x:auto; padding-bottom:2px; margin-bottom:20px; border-bottom:1px solid var(--border);}
   nav.tabs button{
@@ -242,6 +244,7 @@
     <div>
       <h1>モデル観察ログ</h1>
       <div class="sub">LEGO&reg;SERIOUS PLAY&reg; モデル記録</div>
+      <a href="manual.html" target="_blank" rel="noopener" class="manual-link">使い方ガイド &rarr;</a>
     </div>
     <div id="userBar" class="user-bar"></div>
   </header>
