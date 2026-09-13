@@ -283,8 +283,10 @@
   var CHECK_LABELS = {d3:'3日後', w1:'1週間後', m1:'1ヶ月後', m3:'3ヶ月後'};
   var POLL_INTERVAL_MS = 25000;
 
-  /* お題モード用のお題プール。ランダムに1つ選んで、それに沿ったモデルを作ってもらう。 */
-  var THEMES = [
+  /* お題モード用のお題プールのフォールバック。本来はサーバー(Themesシート)から
+     取得したものを使うが、まだ同期が済んでいない起動直後などのために、最低限の
+     初期セットをここに残しておく。お題の追加・修正は管理者がお題モード画面から行う。 */
+  var THEME_FALLBACK = [
     '今のあなたを表すモデル',
     '理想のチームを表すモデル',
     '最近乗り越えた壁を表すモデル',
@@ -315,6 +317,11 @@
   var currentView = 'list';
   var currentDetailId = null;
   var currentTheme = '';
+  var themesList = []; // サーバー(Themesシート)から取得したお題一覧 [{id,text}, ...]
+  var isAdmin = false; // お題の追加・修正ができる管理者かどうか(サーバーがセッションから判定)
+  var editingThemeId = null;
+  var themeAdminBusy = false;
+  var themeAdminError = '';
   var pinsVisible = true;
   var today = new Date();
   var monthYear = today.getFullYear(), monthMonth = today.getMonth(); // 「月ごとの記録一覧」で表示する年月
@@ -666,6 +673,8 @@
       modelsList = data.models || [];
       photosList = data.photos || [];
       actionsList = data.actions || [];
+      themesList = data.themes || [];
+      isAdmin = !!data.isAdmin;
       lastSyncAt = new Date();
       renderApp();
     }catch(e){
@@ -962,6 +971,44 @@
     else { html += themeModels.map(modelCardHtml).join(''); }
     html += '</div>';
 
+    if(isAdmin){ html += themeAdminHtml(); }
+
+    html += '</div>';
+    return html;
+  }
+
+  /* お題の追加・修正は管理者(kikimaosamu@gmail.com)のみ。isAdminはサーバー側が
+     セッションから判定した結果であり、この管理パネルの表示/非表示はあくまで見た目の
+     制御に過ぎない。実際の操作可否はCode.gs側のrequireAdminで必ず検証している。 */
+  function themeAdminHtml(){
+    var html = '<div class="card panel stack">';
+    html += '<h3 class="section-title">お題を管理する（管理者のみ）</h3>';
+    html += '<p class="section-hint">ここで追加・編集・削除したお題が、全員の「お題を引く」に反映されます。</p>';
+    if(themeAdminError) html += '<div class="notice error">'+escapeHtml(themeAdminError)+'</div>';
+    html += '<div class="stack">';
+    if(themesList.length===0){ html += '<p class="section-hint">お題が登録されていません。</p>'; }
+    themesList.forEach(function(t){
+      if(editingThemeId === t.id){
+        html += '<div class="row" style="align-items:center;">'+
+          '<input type="text" id="theme-edit-input" value="'+escapeHtml(t.text)+'" style="flex:1;" />'+
+          '<button type="button" class="btn btn-primary" data-action="theme-save-edit" data-id="'+t.id+'" '+(themeAdminBusy?'disabled':'')+'>保存</button>'+
+          '<button type="button" class="btn btn-secondary" data-action="theme-cancel-edit" '+(themeAdminBusy?'disabled':'')+'>キャンセル</button>'+
+        '</div>';
+      } else {
+        html += '<div class="row" style="justify-content:space-between; align-items:center;">'+
+          '<span>'+escapeHtml(t.text)+'</span>'+
+          '<span class="row">'+
+            '<button type="button" class="btn btn-secondary" data-action="theme-edit-start" data-id="'+t.id+'">編集</button>'+
+            '<button type="button" class="btn-danger-text" data-action="theme-delete" data-id="'+t.id+'">削除</button>'+
+          '</span>'+
+        '</div>';
+      }
+    });
+    html += '</div>';
+    html += '<div class="row" style="align-items:center;">'+
+      '<input type="text" id="theme-new-input" placeholder="新しいお題を入力（例：理想の休日を表すモデル）" style="flex:1;" />'+
+      '<button type="button" class="btn btn-primary" data-action="theme-add" '+(themeAdminBusy?'disabled':'')+'>追加する</button>'+
+    '</div>';
     html += '</div>';
     return html;
   }
@@ -1133,6 +1180,53 @@
       console.error(e);
       deleteBusy = false;
       deleteError = '削除に失敗しました: '+e.message;
+      renderView();
+    }
+  }
+
+  /* ---------- お題の管理(管理者のみ。サーバー側でも必ずrequireAdminで検証される) ---------- */
+  async function doAddTheme(){
+    var input = document.getElementById('theme-new-input');
+    var text = input ? input.value.trim() : '';
+    if(!text){ themeAdminError='お題の内容を入力してください。'; renderView(); return; }
+    themeAdminBusy = true; themeAdminError=''; renderView();
+    try{
+      await apiCall('createTheme', {text:text});
+      themeAdminBusy = false;
+      await refreshData(true);
+    }catch(e){
+      console.error(e);
+      themeAdminBusy = false;
+      themeAdminError = '追加に失敗しました: '+e.message;
+      renderView();
+    }
+  }
+  async function doSaveThemeEdit(id){
+    var input = document.getElementById('theme-edit-input');
+    var text = input ? input.value.trim() : '';
+    if(!text){ themeAdminError='お題の内容を入力してください。'; renderView(); return; }
+    themeAdminBusy = true; themeAdminError=''; renderView();
+    try{
+      await apiCall('updateTheme', {id:id, text:text});
+      themeAdminBusy = false; editingThemeId = null;
+      await refreshData(true);
+    }catch(e){
+      console.error(e);
+      themeAdminBusy = false;
+      themeAdminError = '更新に失敗しました: '+e.message;
+      renderView();
+    }
+  }
+  async function doDeleteTheme(id){
+    themeAdminBusy = true; themeAdminError=''; renderView();
+    try{
+      await apiCall('deleteTheme', {id:id});
+      themeAdminBusy = false;
+      await refreshData(true);
+    }catch(e){
+      console.error(e);
+      themeAdminBusy = false;
+      themeAdminError = '削除に失敗しました: '+e.message;
       renderView();
     }
   }
@@ -1392,8 +1486,17 @@
     else if(action==='action-add-row'){ draft.actions.push(''); renderView(); }
     else if(action==='action-remove-row'){ var idx=Number(el.getAttribute('data-idx')); draft.actions.splice(idx,1); if(draft.actions.length===0) draft.actions.push(''); renderView(); }
     else if(action==='save-new-model'){ doSaveNewModel(); }
-    else if(action==='theme-draw'){ currentTheme = THEMES[Math.floor(Math.random()*THEMES.length)]; renderView(); }
+    else if(action==='theme-draw'){
+      var pool = themesList.length ? themesList.map(function(t){ return t.text; }) : THEME_FALLBACK;
+      currentTheme = pool[Math.floor(Math.random()*pool.length)];
+      renderView();
+    }
     else if(action==='theme-start-record'){ draft = freshDraft(); draft.theme = currentTheme; draft.title = currentTheme; currentView='new'; renderApp(); }
+    else if(action==='theme-edit-start'){ editingThemeId = el.getAttribute('data-id'); themeAdminError=''; renderView(); }
+    else if(action==='theme-cancel-edit'){ editingThemeId = null; themeAdminError=''; renderView(); }
+    else if(action==='theme-save-edit'){ doSaveThemeEdit(el.getAttribute('data-id')); }
+    else if(action==='theme-delete'){ doDeleteTheme(el.getAttribute('data-id')); }
+    else if(action==='theme-add'){ doAddTheme(); }
     else if(action==='open-check'){ openCheckForm(el.getAttribute('data-action-id'), el.getAttribute('data-key')); }
   });
 
