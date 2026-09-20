@@ -3,42 +3,42 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>モデル観察ログ</title>
+<title>モデログ</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@400;500;600;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <script src="https://www.google.com/recaptcha/api.js?onload=onRecaptchaLoad&render=explicit" async defer></script>
 <style>
   :root{
-    --bg:#f1efe6; --surface:#ffffff; --surface-alt:#e7e1d0; --border:#d6cdb6;
-    --text:#211e1a; --text-muted:#726a58;
-    --accent:#2e4e77; --accent-soft:#dde5ee; --accent-contrast:#ffffff;
-    --warm:#a9832e; --warm-soft:#f1e7cc;
-    --good:#4b7a52; --good-soft:#deecdf;
-    --danger:#a24438; --danger-soft:#f1dad5;
-    --shadow:0 1px 2px rgba(33,30,26,.07), 0 8px 20px rgba(33,30,26,.08);
-    --radius-s:7px; --radius-m:12px; --radius-l:18px;
+    --bg:#fff8ef; --surface:#ffffff; --surface-alt:#fff0da; --border:#f2ddb8;
+    --text:#241c3d; --text-muted:#6b6089;
+    --accent:#6c5ce7; --accent-soft:#ece7fd; --accent-contrast:#ffffff;
+    --warm:#ff9f1c; --warm-soft:#fff0da;
+    --good:#17b978; --good-soft:#dcf7ea;
+    --danger:#ff4757; --danger-soft:#ffe3e6;
+    --shadow:0 2px 5px rgba(108,92,231,.09), 0 10px 28px rgba(108,92,231,.14);
+    --radius-s:9px; --radius-m:16px; --radius-l:22px;
     --font-display:'Shippori Mincho B1', 'Hiragino Mincho ProN', serif;
     --font-body:'Zen Kaku Gothic New', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
     --font-mono:'IBM Plex Mono', ui-monospace, monospace;
   }
   @media (prefers-color-scheme: dark){
     :root:not([data-theme="light"]){
-      --bg:#1b1915; --surface:#242019; --surface-alt:#2d2820; --border:#443d30;
-      --text:#ece6d9; --text-muted:#aa9f89;
-      --accent:#8faad2; --accent-soft:#2a3a52; --accent-contrast:#12131a;
-      --warm:#e3ac6a; --warm-soft:#3a2f1c;
-      --good:#86bb8c; --good-soft:#213424;
-      --danger:#e0897d; --danger-soft:#3c2420;
-      --shadow:0 1px 2px rgba(0,0,0,.35), 0 8px 24px rgba(0,0,0,.4);
+      --bg:#1a1625; --surface:#241e38; --surface-alt:#2e2748; --border:#463a68;
+      --text:#f3eeff; --text-muted:#b6abda;
+      --accent:#a78bfa; --accent-soft:#362a5c; --accent-contrast:#1a1625;
+      --warm:#ffb454; --warm-soft:#45341c;
+      --good:#4ade80; --good-soft:#1c3a2c;
+      --danger:#ff6b6f; --danger-soft:#412129;
+      --shadow:0 2px 5px rgba(0,0,0,.4), 0 10px 28px rgba(0,0,0,.45);
     }
   }
   :root[data-theme="dark"]{
-    --bg:#1b1915; --surface:#242019; --surface-alt:#2d2820; --border:#443d30;
-    --text:#ece6d9; --text-muted:#aa9f89;
-    --accent:#8faad2; --accent-soft:#2a3a52; --accent-contrast:#12131a;
-    --warm:#e3ac6a; --warm-soft:#3a2f1c;
-    --good:#86bb8c; --good-soft:#213424;
-    --danger:#e0897d; --danger-soft:#3c2420;
-    --shadow:0 1px 2px rgba(0,0,0,.35), 0 8px 24px rgba(0,0,0,.4);
+    --bg:#1a1625; --surface:#241e38; --surface-alt:#2e2748; --border:#463a68;
+    --text:#f3eeff; --text-muted:#b6abda;
+    --accent:#a78bfa; --accent-soft:#362a5c; --accent-contrast:#1a1625;
+    --warm:#ffb454; --warm-soft:#45341c;
+    --good:#4ade80; --good-soft:#1c3a2c;
+    --danger:#ff6b6f; --danger-soft:#412129;
+    --shadow:0 2px 5px rgba(0,0,0,.4), 0 10px 28px rgba(0,0,0,.45);
   }
 
   *{box-sizing:border-box;}
@@ -48,13 +48,21 @@
     font-family:var(--font-body); line-height:1.6;
     padding-inline:16px;
   }
+  body::before{
+    content:""; position:fixed; top:0; left:0; right:0; height:5px; z-index:100;
+    background:linear-gradient(90deg, var(--accent), var(--warm), var(--good), var(--danger), var(--accent));
+    background-size:200% 100%;
+    animation:molGradientShift 10s linear infinite;
+  }
+  @keyframes molGradientShift{ from{background-position:0% 0;} to{background-position:200% 0;} }
+  @media (prefers-reduced-motion:reduce){ body::before{animation:none;} }
   h1,h2,h3,h4{font-family:var(--font-display); text-wrap:balance; margin:0;}
   button{font-family:inherit; cursor:pointer;}
   input,textarea,select{font-family:inherit; font-size:inherit; color:var(--text); background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-s);}
   input:focus-visible,textarea:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
   ::selection{background:var(--accent-soft);}
 
-  #shell{max-width:920px; margin:0 auto; padding-block:20px 60px;}
+  #shell{max-width:920px; margin:0 auto; padding-block:26px 60px;}
 
   .masthead{display:flex; align-items:baseline; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:18px;}
   .masthead h1{font-size:clamp(22px,4vw,30px); font-weight:600; letter-spacing:.02em;}
@@ -68,29 +76,31 @@
     white-space:nowrap; border-bottom:2px solid transparent; margin-bottom:-1px; position:relative;
     display:flex; align-items:center; gap:6px;
   }
-  nav.tabs button.is-active{color:var(--text); border-bottom-color:var(--accent); font-weight:700;}
+  nav.tabs button.is-active{color:var(--accent); border-bottom-color:var(--accent); border-bottom-width:3px; font-weight:700;}
   nav.tabs .badge{background:var(--danger); color:#fff; font-family:var(--font-mono); font-size:11px; padding:1px 6px; border-radius:99px;}
 
-  .card{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-m); box-shadow:var(--shadow);}
+  .card{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-m); box-shadow:var(--shadow); transition:transform .16s ease, box-shadow .16s ease;}
   .panel{padding:20px;}
   .stack{display:flex; flex-direction:column; gap:16px;}
   .row{display:flex; gap:12px; flex-wrap:wrap; align-items:center;}
   .row.between{justify-content:space-between;}
 
-  .btn{border-radius:var(--radius-s); padding:9px 16px; font-size:14px; font-weight:600; border:1px solid var(--border); background:var(--surface); color:var(--text);}
-  .btn:hover{border-color:var(--accent);}
+  .btn{border-radius:var(--radius-s); padding:9px 16px; font-size:14px; font-weight:600; border:1px solid var(--border); background:var(--surface); color:var(--text); transition:transform .14s ease, box-shadow .14s ease, border-color .14s ease, opacity .14s ease;}
+  .btn:hover{border-color:var(--accent); transform:translateY(-1px);}
+  .btn:active{transform:translateY(0);}
   .btn-primary{background:var(--accent); color:var(--accent-contrast); border-color:var(--accent);}
-  .btn-primary:hover{opacity:.92;}
+  .btn-primary:hover{opacity:.94; box-shadow:0 6px 16px rgba(108,92,231,.32);}
   .btn-secondary{background:transparent;}
   .btn-danger-text{background:none; border:none; color:var(--danger); font-size:12px; text-decoration:underline; padding:2px 4px;}
   .btn-danger{background:var(--danger); color:#fff; border-color:var(--danger);}
-  .btn-danger:hover{opacity:.9;}
+  .btn-danger:hover{opacity:.9; box-shadow:0 6px 16px rgba(255,71,87,.3);}
   .btn-danger-outline{background:transparent; color:var(--danger); border-color:var(--danger);}
   .danger-zone{border-top:1px solid var(--border); padding-top:14px; margin-top:4px;}
-  .badge-private{display:inline-block; font-size:11px; font-weight:600; color:var(--text-muted); border:1px solid var(--border); border-radius:99px; padding:1px 8px; vertical-align:middle;}
-  .badge-theme{display:inline-block; font-size:11px; font-weight:600; color:var(--accent-contrast); background:var(--accent); border-radius:99px; padding:1px 8px; vertical-align:middle;}
-  .btn:disabled{opacity:.5; cursor:not-allowed;}
-  .chip-btn{border:1px solid var(--border); background:var(--surface); border-radius:99px; padding:6px 13px; font-size:13px; color:var(--text-muted);}
+  .badge-private{display:inline-block; font-size:11px; font-weight:600; color:var(--text-muted); background:var(--surface-alt); border-radius:99px; padding:2px 9px; vertical-align:middle;}
+  .badge-theme{display:inline-block; font-size:11px; font-weight:600; color:var(--accent-contrast); background:var(--accent); border-radius:99px; padding:2px 9px; vertical-align:middle;}
+  .btn:disabled{opacity:.5; cursor:not-allowed; transform:none;}
+  .chip-btn{border:1px solid var(--border); background:var(--surface); border-radius:99px; padding:6px 13px; font-size:13px; color:var(--text-muted); transition:transform .14s ease, border-color .14s ease;}
+  .chip-btn:hover{border-color:var(--accent); transform:translateY(-1px);}
   .chip-btn.is-active{background:var(--accent-soft); color:var(--accent); border-color:var(--accent); font-weight:700;}
   .icon-btn{background:none; border:none; font-size:20px; line-height:1; color:var(--text-muted); padding:2px 6px;}
 
@@ -171,7 +181,7 @@
 
   /* list & cards of models */
   .model-card{display:flex; gap:14px; padding:14px; cursor:pointer;}
-  .model-card:hover{border-color:var(--accent);}
+  .model-card:hover{border-color:var(--accent); transform:translateY(-2px); box-shadow:0 4px 10px rgba(108,92,231,.12), 0 14px 30px rgba(108,92,231,.16);}
   .model-thumb{width:88px; height:66px; border-radius:var(--radius-s); overflow:hidden; flex-shrink:0; background:var(--surface-alt); display:flex; align-items:center; justify-content:center; color:var(--text-muted); font-size:11px;}
   .model-thumb img{width:100%; height:100%; object-fit:cover;}
   .model-card .meta{font-size:12.5px; color:var(--text-muted); font-family:var(--font-mono);}
@@ -242,7 +252,7 @@
 <div id="shell">
   <header class="masthead">
     <div>
-      <h1>モデル観察ログ</h1>
+      <h1>モデログ</h1>
       <div class="sub">LEGO&reg;SERIOUS PLAY&reg; モデル記録</div>
       <a href="manual.html" target="_blank" rel="noopener" class="manual-link">使い方ガイド &rarr;</a>
     </div>
