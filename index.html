@@ -70,6 +70,15 @@
   .manual-link{display:inline-block; margin-top:6px; font-size:12.5px; font-weight:600; text-decoration:none; color:var(--accent);}
   .manual-link:hover{text-decoration:underline;}
 
+  .club-banner{
+    display:inline-flex; align-items:center; gap:10px;
+    background:linear-gradient(90deg, var(--accent-soft), var(--warm-soft));
+    border:1px solid var(--border); border-radius:var(--radius-l);
+    padding:7px 16px 7px 8px; margin:8px 0 8px;
+  }
+  .club-icon{width:32px; height:32px; flex-shrink:0;}
+  .club-banner .club-text{font-family:var(--font-display); font-weight:700; font-size:15px; color:var(--text); letter-spacing:.02em;}
+
   nav.tabs{display:flex; gap:6px; overflow-x:auto; padding-bottom:2px; margin-bottom:20px; border-bottom:1px solid var(--border);}
   nav.tabs button{
     background:none; border:none; padding:10px 14px; font-size:14px; color:var(--text-muted);
@@ -253,7 +262,20 @@
   <header class="masthead">
     <div>
       <h1>モデログ</h1>
-      <div class="sub">LEGO&reg;SERIOUS PLAY&reg; モデル記録</div>
+      <div class="club-banner">
+        <svg class="club-icon" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect x="14" y="12" width="20" height="16" rx="4" fill="var(--warm)"/>
+          <circle cx="19" cy="12" r="2.6" fill="var(--warm)"/>
+          <circle cx="29" cy="12" r="2.6" fill="var(--warm)"/>
+          <rect x="4" y="17" width="20" height="16" rx="4" fill="var(--accent)"/>
+          <circle cx="9" cy="17" r="2.6" fill="var(--accent)"/>
+          <circle cx="19" cy="17" r="2.6" fill="var(--accent)"/>
+          <circle cx="31" cy="30" r="7.5" fill="var(--good)" stroke="var(--bg)" stroke-width="2"/>
+          <path d="M27.7 30.1l2.1 2.1 4.3-4.6" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        </svg>
+        <span class="club-text">モデログ倶楽部</span>
+      </div>
+      <div class="sub">モデルと意味を記録し、ときどきふりかえる</div>
       <a href="manual.html" target="_blank" rel="noopener" class="manual-link">使い方ガイド &rarr;</a>
     </div>
     <div id="userBar" class="user-bar"></div>

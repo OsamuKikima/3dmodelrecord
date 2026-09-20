@@ -67,6 +67,15 @@
   .back-link{white-space:nowrap; font-size:14px; font-weight:600; text-decoration:none; border:1px solid var(--border); border-radius:99px; padding:8px 16px; background:var(--surface); transition:transform .14s ease, border-color .14s ease;}
   .back-link:hover{border-color:var(--accent); transform:translateY(-1px);}
 
+  .club-banner{
+    display:inline-flex; align-items:center; gap:10px;
+    background:linear-gradient(90deg, var(--accent-soft), var(--warm-soft));
+    border:1px solid var(--border); border-radius:var(--radius-l);
+    padding:7px 16px 7px 8px; margin:8px 0 4px;
+  }
+  .club-icon{width:32px; height:32px; flex-shrink:0;}
+  .club-banner .club-text{font-family:var(--font-display); font-weight:700; font-size:15px; color:var(--text); letter-spacing:.02em;}
+
   .lede{color:var(--text-muted); font-size:15px; max-width:60ch; margin:18px 0 28px;}
 
   .toc{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-m); box-shadow:var(--shadow); padding:20px 24px; margin-bottom:36px;}
@@ -121,7 +130,20 @@
   <header class="masthead">
     <div>
       <h1>使い方ガイド</h1>
-      <div class="sub">モデログ &mdash; LEGO&reg;SERIOUS PLAY&reg; モデル記録</div>
+      <div class="club-banner">
+        <svg class="club-icon" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect x="14" y="12" width="20" height="16" rx="4" fill="var(--warm)"/>
+          <circle cx="19" cy="12" r="2.6" fill="var(--warm)"/>
+          <circle cx="29" cy="12" r="2.6" fill="var(--warm)"/>
+          <rect x="4" y="17" width="20" height="16" rx="4" fill="var(--accent)"/>
+          <circle cx="9" cy="17" r="2.6" fill="var(--accent)"/>
+          <circle cx="19" cy="17" r="2.6" fill="var(--accent)"/>
+          <circle cx="31" cy="30" r="7.5" fill="var(--good)" stroke="var(--bg)" stroke-width="2"/>
+          <path d="M27.7 30.1l2.1 2.1 4.3-4.6" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        </svg>
+        <span class="club-text">モデログ倶楽部</span>
+      </div>
+      <div class="sub">モデログ &mdash; モデルと意味を記録し、ときどきふりかえる</div>
     </div>
     <a href="index.html" class="back-link">&larr; アプリを開く</a>
   </header>
