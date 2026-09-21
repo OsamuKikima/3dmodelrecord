@@ -74,7 +74,13 @@
     padding:7px 16px 7px 8px; margin:8px 0 4px;
   }
   .club-icon{width:32px; height:32px; flex-shrink:0;}
-  .club-banner .club-text{font-family:var(--font-display); font-weight:700; font-size:15px; color:var(--text); letter-spacing:.02em;}
+  .club-banner-text{display:flex; flex-direction:column; gap:1px;}
+  .club-banner .club-text{font-family:var(--font-display); font-weight:700; font-size:15px; color:var(--text); letter-spacing:.02em; margin:0; line-height:1.2;}
+  .wordmark{font-family:var(--font-mono); font-weight:700; font-size:11px; letter-spacing:.04em; line-height:1; display:inline-flex; align-items:baseline;}
+  .wm-model{color:var(--accent);}
+  .wm-log{color:var(--warm);}
+  .wm-l{color:var(--good); font-weight:800; position:relative; padding:0 .5px;}
+  .wm-l::after{content:""; position:absolute; top:-4px; left:50%; transform:translateX(-50%); width:4px; height:4px; border-radius:50%; background:var(--good);}
 
   .lede{color:var(--text-muted); font-size:15px; max-width:60ch; margin:18px 0 28px;}
 
@@ -141,7 +147,10 @@
           <circle cx="31" cy="30" r="7.5" fill="var(--good)" stroke="var(--bg)" stroke-width="2"/>
           <path d="M27.7 30.1l2.1 2.1 4.3-4.6" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
         </svg>
-        <span class="club-text">モデログ倶楽部</span>
+        <div class="club-banner-text">
+          <span class="club-text">モデログ倶楽部</span>
+          <span class="wordmark" aria-hidden="true"><span class="wm-model">mode</span><span class="wm-l">l</span><span class="wm-log">og</span></span>
+        </div>
       </div>
       <div class="sub">モデログ &mdash; モデルと意味を記録し、ときどきふりかえる</div>
     </div>
@@ -163,7 +172,8 @@
       <li><a href="#theme-mode">8. お題モード</a></li>
       <li><a href="#theme-admin">9. お題を管理する（管理者向け）</a></li>
       <li><a href="#checks">10. アクションチェック</a></li>
-      <li><a href="#faq">11. よくある質問</a></li>
+      <li><a href="#medals">11. 特別な記録（メダルと登録数の推移）</a></li>
+      <li><a href="#faq">12. よくある質問</a></li>
     </ol>
   </nav>
 
@@ -208,12 +218,22 @@
       <li><strong>場所・イベント</strong>：ワークショップ名などがあれば</li>
       <li><strong>モデルが示すストーリー（全体の概要）</strong>：モデル全体が表現している世界観やストーリー</li>
       <li><strong>公開設定</strong>：他の人にも見せるか、自分だけにするか（詳しくは <a href="#visibility">5. 公開・非公開を選ぶ</a>）</li>
-      <li><strong>写真</strong>：正面・右・左・上・背面のうち、撮影した角度を最低1枚登録（必須）</li>
+      <li><strong>記録の方法</strong>：どう写真・動画を残すか（下記「記録の方法を選ぶ」参照）</li>
       <li><strong>そのときに気づいたこと</strong>：モデルを作りながら気づいたこと</li>
       <li><strong>明日からのアクション</strong>：この気づきをもとに、明日から取り組むこと（複数追加可）</li>
     </ul>
-    <p>すべて入力したら、右下の「この記録を保存」を押します。保存すると、写真を立体（立方体）として回転させながら見られる記録詳細画面に移動します。</p>
+    <p>すべて入力したら、右下の「この記録を保存」を押します。</p>
     <div class="tip"><span class="label">ポイント</span>「明日からのアクション」を登録すると、3日後・1週間後・1ヶ月後・3ヶ月後の4つのタイミングで、「アクションチェック」タブに振り返りの通知が表示されるようになります（<a href="#checks">10. アクションチェック</a>参照）。</div>
+
+    <h3>記録の方法を選ぶ</h3>
+    <p>「記録の方法」では、4つの中から選べます。通常は1枚で十分ですが、複数の角度や動画を残したいときだけ、他の方法に切り替えてください。</p>
+    <ul>
+      <li><strong>1枚で記録する（標準）</strong>：モデル全体が分かる写真を1枚だけ登録します。もっともシンプルな記録方法です。</li>
+      <li><strong>2枚で記録する</strong>：写真を2枚まで登録できます。それぞれの写真に「全体」「アップ」のような、好きなラベルを自由に付けられます。</li>
+      <li><strong>5枚（立体）で記録する</strong>：正面・右・左・上・背面のうち、撮影した角度を登録すると、記録の詳細画面で写真を立体（立方体）として回転させながら見られます。</li>
+      <li><strong>動画で記録する</strong>：写真の代わりに動画（30MBまで）を1本登録します。動画には、次の章で説明する「注釈（ピン）」は付けられません。</li>
+    </ul>
+    <div class="tip"><span class="label">ポイント</span>一度保存した記録の記録方法を後から変更する機能は現在ありません。この機能が追加される前に登録した記録は、これまでどおり5枚（立体）の記録として表示されます。</div>
   </section>
 
   <section class="step" id="annotate">
@@ -225,6 +245,7 @@
       <li>複数の部分どうしの関係性（つながり・対立など）も記録できます。</li>
     </ol>
     <p>記録した注釈は、詳細画面で「ピン・関係の表示」にチェックが入っているときに写真上に表示されます。</p>
+    <div class="warn"><span class="label">ご注意</span>「動画で記録する」を選んだ記録には、この注釈（ピン）機能はありません。</div>
   </section>
 
   <section class="step" id="visibility">
@@ -291,8 +312,18 @@
     <p>もう振り返りが不要になったアクションは、記録の詳細画面から以降のチェックを停止することもできます。</p>
   </section>
 
+  <section class="step" id="medals">
+    <h2><span class="num">11</span>特別な記録（メダルと登録数の推移）</h2>
+    <p>「特別な記録」タブでは、これまでのモデル登録数に応じた記念メダルと、登録数の推移をふりかえれます。</p>
+    <h3>登録数の推移グラフ</h3>
+    <p>タブの最上部には、自分が記録した日ごとの累積登録数を表す折れ線グラフがあります。横軸が記録日、縦軸が累積個数で、記録した日数や個数に応じて目盛りの間隔が自動的に見やすく調整されます。グラフの上にマウスを合わせる（スマートフォンでは指でなぞる）と、その時点の日付と累積個数がツールチップで表示されます。</p>
+    <h3>メダル</h3>
+    <p>モデルの登録数が節目（1個目・3個目・10個目…10000個目まで、全36段階）に達するたびに、記念のメダルが届きます。ぞろ目や記念日を思わせる数字（3、333、365、777、999など）には、星の飾りが付きます。獲得したメダルは、記録を削除して登録数が減っても取り消されません。</p>
+    <div class="tip"><span class="label">ポイント</span>新規記録の保存時に新しいメダルを獲得すると、その場でお祝いのポップアップが表示されます。</div>
+  </section>
+
   <section class="step" id="faq">
-    <h2><span class="num">11</span>よくある質問</h2>
+    <h2><span class="num">12</span>よくある質問</h2>
     <dl class="faq">
       <dt>Q. 保存しようとすると「サーバーからの応答がありませんでした」と出る</dt>
       <dd>A. 通信が混み合っている可能性があります。少し時間をおいてから、もう一度「保存」を押してみてください。改善しない場合は、アプリの管理者に連絡してください。</dd>

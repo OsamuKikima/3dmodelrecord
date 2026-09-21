@@ -65,7 +65,6 @@
   #shell{max-width:920px; margin:0 auto; padding-block:26px 60px;}
 
   .masthead{display:flex; align-items:baseline; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:18px;}
-  .masthead h1{font-size:clamp(22px,4vw,30px); font-weight:600; letter-spacing:.02em;}
   .masthead .sub{font-family:var(--font-mono); font-size:12px; color:var(--text-muted); letter-spacing:.04em;}
   .manual-link{display:inline-block; margin-top:6px; font-size:12.5px; font-weight:600; text-decoration:none; color:var(--accent);}
   .manual-link:hover{text-decoration:underline;}
@@ -77,7 +76,13 @@
     padding:7px 16px 7px 8px; margin:8px 0 8px;
   }
   .club-icon{width:32px; height:32px; flex-shrink:0;}
-  .club-banner .club-text{font-family:var(--font-display); font-weight:700; font-size:15px; color:var(--text); letter-spacing:.02em;}
+  .club-banner-text{display:flex; flex-direction:column; gap:1px;}
+  .club-banner .club-text{font-family:var(--font-display); font-weight:700; font-size:15px; color:var(--text); letter-spacing:.02em; margin:0; line-height:1.2;}
+  .wordmark{font-family:var(--font-mono); font-weight:700; font-size:11px; letter-spacing:.04em; line-height:1; display:inline-flex; align-items:baseline;}
+  .wm-model{color:var(--accent);}
+  .wm-log{color:var(--warm);}
+  .wm-l{color:var(--good); font-weight:800; position:relative; padding:0 .5px;}
+  .wm-l::after{content:""; position:absolute; top:-4px; left:50%; transform:translateX(-50%); width:4px; height:4px; border-radius:50%; background:var(--good);}
 
   nav.tabs{display:flex; gap:6px; overflow-x:auto; padding-bottom:2px; margin-bottom:20px; border-bottom:1px solid var(--border);}
   nav.tabs button{
@@ -107,6 +112,7 @@
   .danger-zone{border-top:1px solid var(--border); padding-top:14px; margin-top:4px;}
   .badge-private{display:inline-block; font-size:11px; font-weight:600; color:var(--text-muted); background:var(--surface-alt); border-radius:99px; padding:2px 9px; vertical-align:middle;}
   .badge-theme{display:inline-block; font-size:11px; font-weight:600; color:var(--accent-contrast); background:var(--accent); border-radius:99px; padding:2px 9px; vertical-align:middle;}
+  .badge-video{display:inline-block; font-size:11px; font-weight:600; color:#fff; background:var(--good); border-radius:99px; padding:2px 9px; vertical-align:middle;}
   .btn:disabled{opacity:.5; cursor:not-allowed; transform:none;}
   .chip-btn{border:1px solid var(--border); background:var(--surface); border-radius:99px; padding:6px 13px; font-size:13px; color:var(--text-muted); transition:transform .14s ease, border-color .14s ease;}
   .chip-btn:hover{border-color:var(--accent); transform:translateY(-1px);}
@@ -129,6 +135,9 @@
   .slot-card{border:1.5px dashed var(--border); border-radius:var(--radius-m); overflow:hidden; background:var(--surface-alt); min-height:150px; display:flex; flex-direction:column;}
   .slot-card.has-photo{border-style:solid; background:var(--surface);}
   .slot-label{font-size:12px; font-weight:700; padding:7px 9px; color:var(--text-muted); font-family:var(--font-mono); letter-spacing:.03em;}
+  .slot-label-input{margin:7px 8px 0; border:none; border-bottom:1.5px dashed var(--border); border-radius:0; background:transparent; font-size:12px; font-weight:700; padding:2px 3px 5px; color:var(--text); font-family:var(--font-mono);}
+  .slot-label-input:focus-visible{outline:none; border-bottom-color:var(--accent);}
+  .slot-label-input::placeholder{color:var(--text-muted); font-weight:500;}
   .slot-empty-btn{flex:1; background:none; border:none; color:var(--text-muted); font-size:13px; display:flex; align-items:center; justify-content:center; padding:16px;}
   .slot-thumb-wrap{position:relative; aspect-ratio:4/3; overflow:hidden;}
   .slot-thumb-wrap img{width:100%; height:100%; object-fit:cover; display:block;}
@@ -201,8 +210,12 @@
   /* detail */
   .detail-meta{display:flex; flex-wrap:wrap; gap:14px; font-size:13px; color:var(--text-muted); font-family:var(--font-mono);}
   .toggle-row{display:flex; align-items:center; gap:8px; font-size:13px;}
-  .photo-gallery{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px;}
-  .photo-block figcaption{font-size:12px; color:var(--text-muted); margin-top:6px; display:flex; justify-content:space-between;}
+  .photo-gallery{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px; margin:0;}
+  .photo-block{margin:0;}
+  .photo-block figcaption{font-size:12px; color:var(--text-muted); margin-top:6px; display:flex; justify-content:space-between; align-items:center; gap:8px;}
+  .photo-block figcaption span{font-weight:700; color:var(--text);}
+  .video-embed-wrap{position:relative; width:100%; aspect-ratio:16/9; border-radius:var(--radius-m); overflow:hidden; background:var(--surface-alt);}
+  .video-embed-wrap iframe{position:absolute; inset:0; width:100%; height:100%; border:0;}
 
   /* cube viewer */
   .cube-wrap{display:flex; flex-direction:column; align-items:center; gap:10px;}
@@ -254,6 +267,53 @@
   .auth-tabs{display:flex; justify-content:center; gap:6px;}
   #recaptchaContainer{display:flex; justify-content:center;}
 
+  /* 特別な記録帳: 記録数の推移グラフ */
+  .medal-chart-card{position:relative;}
+  .medal-chart-head{display:flex; justify-content:space-between; align-items:baseline; gap:10px; flex-wrap:wrap;}
+  .medal-chart-total{font-family:var(--font-mono); font-size:12.5px; color:var(--text-muted);}
+  .medal-chart-total b{color:var(--accent); font-size:15px;}
+  .medal-chart-wrap{position:relative;}
+  .medal-chart-svg{display:block; width:100%; height:auto;}
+  .medal-chart-grid line{stroke:var(--border);}
+  .medal-chart-axis-label{font-family:var(--font-mono); font-size:10px; fill:var(--text-muted);}
+  .medal-chart-area{fill:var(--accent-soft); opacity:.7;}
+  .medal-chart-line{fill:none; stroke:var(--accent); stroke-width:2; stroke-linecap:round; stroke-linejoin:round;}
+  .medal-chart-dot{fill:var(--surface); stroke:var(--accent); stroke-width:2;}
+  .medal-chart-crosshair{stroke:var(--text-muted); stroke-width:1; stroke-dasharray:3 3; opacity:0; pointer-events:none;}
+  .medal-chart-hoverdot{fill:var(--accent); stroke:var(--surface); stroke-width:2; opacity:0; pointer-events:none;}
+  .medal-chart-hitrect{fill:transparent; cursor:crosshair;}
+  .medal-chart-tooltip{
+    position:absolute; pointer-events:none; opacity:0; transform:translate(-50%,-100%);
+    background:var(--text); color:var(--bg); border-radius:var(--radius-s); padding:5px 9px;
+    font-size:12px; font-family:var(--font-mono); white-space:nowrap; box-shadow:var(--shadow); z-index:2;
+    transition:opacity .1s ease;
+  }
+  .medal-chart-empty{font-size:13.5px; color:var(--text-muted); padding:18px 4px; text-align:center;}
+
+  /* 特別な記録帳(メダル) */
+  .medal-progress{font-size:13.5px; color:var(--text-muted);}
+  .medal-progress b{color:var(--text);}
+  .medal-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(96px,1fr)); gap:16px 10px; text-align:center;}
+  .medal-card{display:flex; flex-direction:column; align-items:center; gap:4px;}
+  .medal{
+    width:60px; height:60px; border-radius:50%; position:relative;
+    display:flex; align-items:center; justify-content:center;
+    font-family:var(--font-mono); font-weight:800; font-size:12.5px; color:#fff;
+    box-shadow:0 2px 3px rgba(0,0,0,.16), inset 0 -3px 0 rgba(0,0,0,.16);
+  }
+  .medal.tier-bronze{background:linear-gradient(150deg, #e3a06a, #a8672a);}
+  .medal.tier-silver{background:linear-gradient(150deg, #dde3ea, #939ba6);}
+  .medal.tier-gold{background:linear-gradient(150deg, #ffdd80, #d19a1d);}
+  .medal.tier-platinum{background:linear-gradient(150deg, #c9b6ff, #7c4fe0); box-shadow:0 2px 3px rgba(0,0,0,.16), inset 0 -3px 0 rgba(0,0,0,.2), 0 0 0 3px var(--accent-soft);}
+  .medal.is-locked{background:var(--surface-alt); color:var(--text-muted); box-shadow:none; border:1.5px dashed var(--border);}
+  .medal-star{position:absolute; top:-5px; right:-3px; width:20px; height:20px;}
+  .medal-label{font-size:12px; font-weight:700; color:var(--text);}
+  .medal-card.is-locked .medal-label{color:var(--text-muted); font-weight:600;}
+  .medal-date{font-size:10.5px; color:var(--text-muted); font-family:var(--font-mono);}
+  .medal-celebration{text-align:center;}
+  .medal-celebration .medal{width:88px; height:88px; font-size:17px; margin:6px auto 14px;}
+  .medal-celebration .medal-star{width:28px; height:28px; top:-8px; right:-6px;}
+
   @media (max-width:480px){ .field-grid{grid-template-columns:1fr;} .annotate-lists{grid-template-columns:1fr;} }
 </style>
 </head>
@@ -261,7 +321,6 @@
 <div id="shell">
   <header class="masthead">
     <div>
-      <h1>モデログ</h1>
       <div class="club-banner">
         <svg class="club-icon" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
           <rect x="14" y="12" width="20" height="16" rx="4" fill="var(--warm)"/>
@@ -273,7 +332,10 @@
           <circle cx="31" cy="30" r="7.5" fill="var(--good)" stroke="var(--bg)" stroke-width="2"/>
           <path d="M27.7 30.1l2.1 2.1 4.3-4.6" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
         </svg>
-        <span class="club-text">モデログ倶楽部</span>
+        <div class="club-banner-text">
+          <h1 class="club-text">モデログ倶楽部</h1>
+          <span class="wordmark" aria-hidden="true"><span class="wm-model">mode</span><span class="wm-l">l</span><span class="wm-log">og</span></span>
+        </div>
       </div>
       <div class="sub">モデルと意味を記録し、ときどきふりかえる</div>
       <a href="manual.html" target="_blank" rel="noopener" class="manual-link">使い方ガイド &rarr;</a>
@@ -318,6 +380,42 @@
   var CHECK_LABELS = {d3:'3日後', w1:'1週間後', m1:'1ヶ月後', m3:'3ヶ月後'};
   var POLL_INTERVAL_MS = 25000;
 
+  /* 記録写真は1枚を標準とし、複数枚・立体・動画にしたい場合だけ選んでもらう。
+     サーバー側 RECORD_MODES と必ず同じキーにすること。 */
+  var RECORD_MODE_OPTIONS = [
+    {key:'single', label:'1枚で記録する（標準）'},
+    {key:'double', label:'2枚で記録する'},
+    {key:'cube',   label:'5枚（立体）で記録する'},
+    {key:'video',  label:'動画で記録する'}
+  ];
+  var VIDEO_MAX_BYTES = 30 * 1024 * 1024; // 30MB
+
+  /** 選択中の記録モードに応じた写真スロットの定義を返す(動画モードはスロットを使わないので空配列)。 */
+  function slotsForMode(mode){
+    if(mode === 'single') return [{key:'main'}];
+    if(mode === 'double') return [
+      {key:'double1', editableLabel:true, placeholder:'例：全体'},
+      {key:'double2', editableLabel:true, placeholder:'例：アップ'}
+    ];
+    if(mode === 'cube') return SLOTS;
+    return [];
+  }
+  /** 記録モードを切り替えた直後の、空のdraft.photosを作る。 */
+  function initialPhotosForMode(mode){
+    var out = {};
+    slotsForMode(mode).forEach(function(s){
+      out[s.key] = s.editableLabel ? {label:'', assetId:null, previewUrl:null, pins:[], relations:[]} : null;
+    });
+    return out;
+  }
+  /** 写真の表示ラベルを決める: 自由入力のラベル(2枚モード) > 固定ラベル(立体モード) > 汎用の「写真」。 */
+  function resolveSlotLabel(photoDoc){
+    if(photoDoc.label) return photoDoc.label;
+    var slotDef = SLOTS.filter(function(s){ return s.key===photoDoc.slot; })[0];
+    if(slotDef) return slotDef.label;
+    return '写真';
+  }
+
   /* お題モード用のお題プールのフォールバック。本来はサーバー(Themesシート)から
      取得したものを使うが、まだ同期が済んでいない起動直後などのために、最低限の
      初期セットをここに残しておく。お題の追加・修正は管理者がお題モード画面から行う。 */
@@ -348,12 +446,24 @@
     '理想のコミュニティを表すモデル'
   ];
 
+  /* モデルの登録数がこの数に達するたびにメダルを1つ授与する(サーバー側 MEDAL_MILESTONES と
+     必ず同じ値にすること)。フロント側では、達成済み/未達成をまとめて一覧表示する
+     「特別な記録」帳の一覧描画にのみ使う(実際の授与判定は必ずサーバー側で行う)。 */
+  var MEDAL_MILESTONES = [
+    1, 3, 10, 20, 50, 100, 150, 200, 250, 300, 333, 365, 400, 500, 555, 600, 700, 777, 800, 900,
+    999, 1000, 1111, 1500, 2000, 3000, 3333, 5000, 5555, 6000, 7000, 7777, 8000, 9000, 9999, 10000
+  ];
+  /* ぞろ目や記念日を思わせる数字など、特に特別扱いする達成数(バッジに星の飾りが付く)。 */
+  var MEDAL_SPECIAL = [333, 365, 555, 777, 999, 1111, 3333, 5555, 7777, 9999];
+
   /* ---------- state ---------- */
   var currentView = 'list';
   var currentDetailId = null;
   var currentTheme = '';
   var themesList = []; // サーバー(Themesシート)から取得したお題一覧 [{id,text}, ...]
   var isAdmin = false; // お題の追加・修正ができる管理者かどうか(サーバーがセッションから判定)
+  var medalsEarned = []; // 自分が獲得済みのメダル [{milestone, awardedAt}, ...]
+  var medalCount = 0; // 自分がこれまでに登録したモデルの件数(サーバー算出)
   var editingThemeId = null;
   var themeAdminBusy = false;
   var themeAdminError = '';
@@ -388,7 +498,9 @@
   function freshDraft(){
     return {
       title:'', date:todayStr(), place:'', noticed:'', story:'', isPublic:true, theme:'',
-      photos:{front:null,right:null,left:null,top:null,back:null},
+      recordMode:'single',
+      photos: initialPhotosForMode('single'),
+      video: null,
       actions:['']
     };
   }
@@ -710,6 +822,13 @@
       actionsList = data.actions || [];
       themesList = data.themes || [];
       isAdmin = !!data.isAdmin;
+      if(session){
+        try{
+          var medalData = await apiCall('listMedals', {});
+          medalsEarned = medalData.earned || [];
+          medalCount = medalData.count || 0;
+        }catch(e2){ console.error(e2); /* メダルの取得に失敗しても本体の同期は継続する */ }
+      }
       lastSyncAt = new Date();
       renderApp();
     }catch(e){
@@ -925,10 +1044,11 @@
   }
 
   function openAnnotateForSlot(slotKey, mode, modelId){
-    var label = SLOTS.filter(function(s){ return s.key===slotKey; })[0].label;
     if(mode === 'draft'){
       var p = draft.photos[slotKey];
       if(!p) return;
+      var fixedSlot = SLOTS.filter(function(s){ return s.key===slotKey; })[0];
+      var label = p.label || (fixedSlot && fixedSlot.label) || '写真';
       openAnnotateModal({
         slot:slotKey, label:label, imgSrc:p.previewUrl, pins:p.pins, relations:p.relations, editable:true,
         onChange:function(pins, relations){ p.pins = pins; p.relations = relations; },
@@ -937,8 +1057,9 @@
     } else {
       var photoDoc = photosList.filter(function(ph){ return ph.modelId===modelId && ph.slot===slotKey; })[0];
       if(!photoDoc) return;
+      var label2 = resolveSlotLabel(photoDoc);
       openAnnotateModal({
-        slot:slotKey, label:label, imgSrc:blobUrl(photoDoc.assetId), pins:photoDoc.pins||[], relations:photoDoc.relations||[], editable:true,
+        slot:slotKey, label:label2, imgSrc:blobUrl(photoDoc.assetId), pins:photoDoc.pins||[], relations:photoDoc.relations||[], editable:true,
         onChange:function(pins, relations){
           photoDoc.pins = pins; photoDoc.relations = relations; // optimistic local update
           apiCall('updatePhotoAnnotations', {id:photoDoc.id, pins:pins, relations:relations}).catch(function(e){ console.error(e); });
@@ -973,7 +1094,8 @@
       {key:'list', label:'記録一覧'},
       {key:'new', label:'新規記録'},
       {key:'theme', label:'お題モード'},
-      {key:'checks', label:'アクションチェック', badge:due}
+      {key:'checks', label:'アクションチェック', badge:due},
+      {key:'medals', label:'特別な記録', badge: medalsEarned.length || null}
     ];
     document.getElementById('tabs').innerHTML = tabs.map(function(t){
       return '<button data-action="nav" data-view="'+t.key+'" class="'+(currentView===t.key?'is-active':'')+'">'+t.label+(t.badge ? '<span class="badge">'+t.badge+'</span>' : '')+'</button>';
@@ -1048,6 +1170,253 @@
     return html;
   }
 
+  /* ---------- rendering: 特別な記録(モデル登録数に応じたメダル) ---------- */
+  function medalTier(n){
+    if(n >= 10000) return 'platinum';
+    if(n >= 1000) return 'gold';
+    if(n >= 100) return 'silver';
+    return 'bronze';
+  }
+  function medalStarSvg(){
+    return '<svg class="medal-star" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'+
+      '<path d="M12 1.5l2.6 6.2 6.7.6-5.1 4.4 1.6 6.6L12 15.9l-5.8 3.4 1.6-6.6-5.1-4.4 6.7-.6z" fill="var(--danger)" stroke="var(--bg)" stroke-width="1"/>'+
+    '</svg>';
+  }
+  function medalBadgeHtml(milestone, earned){
+    var special = MEDAL_SPECIAL.indexOf(milestone) !== -1;
+    var cls = earned ? ('medal tier-'+medalTier(milestone)) : 'medal is-locked';
+    return '<div class="'+cls+'">'+(earned && special ? medalStarSvg() : '')+'<span>'+milestone+'</span></div>';
+  }
+  /* ---------- rendering: 特別な記録(登録数の推移グラフ) ---------- */
+  /** 自分の記録を日付順に積み上げ、[{date, count, real}] の累積系列を作る。
+   * realはその日の実際の登録を表す点。最後の登録日が今日より前なら、
+   * 今日時点まで線を伸ばすための点(real:false)を末尾に足す。 */
+  function buildCumulativeSeries(){
+    var own = modelsList.filter(function(m){ return m.isMine; });
+    var byDate = {};
+    own.forEach(function(m){
+      var d = String(m.date||'').slice(0,10);
+      if(!d) return;
+      byDate[d] = (byDate[d]||0) + 1;
+    });
+    var dates = Object.keys(byDate).sort();
+    var running = 0;
+    var points = dates.map(function(d){ running += byDate[d]; return {date:d, count:running, real:true}; });
+    var today = todayStr();
+    if(points.length && points[points.length-1].date < today){
+      points.push({date:today, count:points[points.length-1].count, real:false});
+    }
+    return points;
+  }
+  /** 目盛りの間隔として見やすい数(1,2,5×10^nのいずれか)を選ぶ。 */
+  function niceStep(roughStep){
+    if(roughStep <= 0) return 1;
+    var pow10 = Math.pow(10, Math.floor(Math.log(roughStep) / Math.LN10));
+    var frac = roughStep / pow10;
+    var niceFrac = frac <= 1 ? 1 : (frac <= 2 ? 2 : (frac <= 5 ? 5 : 10));
+    return Math.max(1, Math.round(niceFrac * pow10));
+  }
+  /** 累積個数(縦軸)の最大値から、0を含む適切な目盛り列を作る。 */
+  function computeYAxis(maxValue, targetTicks){
+    targetTicks = targetTicks || 4;
+    maxValue = Math.max(1, maxValue);
+    var step = niceStep(maxValue / targetTicks);
+    var niceMax = Math.ceil(maxValue / step) * step;
+    var ticks = [];
+    for(var v = 0; v <= niceMax; v += step) ticks.push(v);
+    return {ticks:ticks, max:niceMax};
+  }
+  /** 記録期間の長さに応じて、日付ラベルの粒度(日/月/年)を切り替える。 */
+  function formatChartDate(dateStr, spanDays){
+    var parts = dateStr.split('-');
+    var y = parts[0], mo = parts[1], d = parts[2];
+    if(spanDays > 730) return y+'年';
+    if(spanDays > 45) return y+'/'+mo;
+    return mo+'/'+d;
+  }
+  function medalChartHtml(){
+    var points = buildCumulativeSeries();
+    if(points.length === 0){
+      return '<div class="card panel medal-chart-card"><h2 class="section-title">登録数の推移</h2>'+
+        '<div class="medal-chart-empty">記録を始めると、ここに登録数の推移グラフが表示されます。</div></div>';
+    }
+    var W = 640, H = 220, padL = 40, padR = 14, padT = 14, padB = 24;
+    var plotW = W - padL - padR, plotH = H - padT - padB;
+    var minT = new Date(points[0].date+'T00:00:00').getTime();
+    var maxT = new Date(points[points.length-1].date+'T00:00:00').getTime();
+    var spanDays = Math.round((maxT - minT) / 86400000);
+    var yMax = points[points.length-1].count;
+    var yAxis = computeYAxis(yMax, 4);
+    function xOf(dateStr){
+      var t = new Date(dateStr+'T00:00:00').getTime();
+      var frac = maxT > minT ? (t - minT) / (maxT - minT) : 0.5;
+      return padL + frac * plotW;
+    }
+    function yOf(count){
+      return padT + plotH - (count / yAxis.max) * plotH;
+    }
+    // 横軸の目盛り: 期間の長さに応じたラベル粒度で、両端を含む均等な位置に立てる
+    var xTickCount = spanDays === 0 ? 1 : Math.min(5, points.length);
+    var xTicks = [];
+    for(var i = 0; i < xTickCount; i++){
+      var frac = xTickCount === 1 ? 0 : i / (xTickCount - 1);
+      var t = minT + frac * (maxT - minT);
+      xTicks.push(new Date(t));
+    }
+    var gridSvg = yAxis.ticks.map(function(v){
+      var y = yOf(v);
+      return '<g class="medal-chart-grid">'+
+        '<line x1="'+padL+'" y1="'+y+'" x2="'+(W-padR)+'" y2="'+y+'" />'+
+        '<text class="medal-chart-axis-label" x="'+(padL-6)+'" y="'+(y+3)+'" text-anchor="end">'+v+'</text>'+
+      '</g>';
+    }).join('');
+    var xAxisSvg = xTicks.map(function(dt){
+      var iso = dt.getFullYear()+'-'+pad(dt.getMonth()+1)+'-'+pad(dt.getDate());
+      var x = xOf(iso);
+      return '<text class="medal-chart-axis-label" x="'+x+'" y="'+(H-6)+'" text-anchor="middle">'+escapeHtml(formatChartDate(iso, spanDays))+'</text>';
+    }).join('');
+    var linePts = points.map(function(p){ return xOf(p.date)+','+yOf(p.count); });
+    var areaPts = [padL+','+yOf(0)].concat(linePts).concat([(padL+plotW)+','+yOf(0)]);
+    var dotsSvg = points.filter(function(p){ return p.real; }).map(function(p){
+      return '<circle class="medal-chart-dot" cx="'+xOf(p.date)+'" cy="'+yOf(p.count)+'" r="3.5" data-date="'+p.date+'" data-count="'+p.count+'" />';
+    }).join('');
+    var dataAttr = escapeHtml(JSON.stringify(points));
+    var svg = '<svg class="medal-chart-svg" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet" role="img" '+
+      'aria-label="'+escapeHtml('これまでに合計'+yMax+'個のモデルを記録した、日付ごとの累積登録数の推移グラフ')+'" data-points="'+dataAttr+'" '+
+      'data-padl="'+padL+'" data-padr="'+padR+'" data-plotw="'+plotW+'" data-mint="'+minT+'" data-maxt="'+maxT+'" data-ymax="'+yAxis.max+'" data-padt="'+padT+'" data-ploth="'+plotH+'">'+
+      gridSvg + xAxisSvg +
+      '<polygon class="medal-chart-area" points="'+areaPts.join(' ')+'" />'+
+      '<polyline class="medal-chart-line" points="'+linePts.join(' ')+'" />'+
+      dotsSvg +
+      '<line class="medal-chart-crosshair" x1="0" y1="'+padT+'" x2="0" y2="'+(padT+plotH)+'" />'+
+      '<circle class="medal-chart-hoverdot" r="4.5" />'+
+      '<rect class="medal-chart-hitrect" x="'+padL+'" y="'+padT+'" width="'+plotW+'" height="'+plotH+'" />'+
+    '</svg>';
+    return '<div class="card panel medal-chart-card stack">'+
+      '<div class="medal-chart-head"><h2 class="section-title" style="margin:0;">登録数の推移</h2>'+
+      '<span class="medal-chart-total">横軸: 記録日　縦軸: 累積個数（現在 <b>'+yMax+'</b> 個）</span></div>'+
+      '<div class="medal-chart-wrap">'+svg+'<div class="medal-chart-tooltip"></div></div>'+
+    '</div>';
+  }
+  /** グラフ上でのマウス移動に応じて、最も近い記録日のツールチップと十字線を表示する。 */
+  function afterMedalsRender(){
+    var svg = document.querySelector('.medal-chart-svg');
+    if(!svg) return;
+    var points = JSON.parse(svg.getAttribute('data-points'));
+    var padL = Number(svg.getAttribute('data-padl'));
+    var plotW = Number(svg.getAttribute('data-plotw'));
+    var minT = Number(svg.getAttribute('data-mint'));
+    var maxT = Number(svg.getAttribute('data-maxt'));
+    var crosshair = svg.querySelector('.medal-chart-crosshair');
+    var hoverDot = svg.querySelector('.medal-chart-hoverdot');
+    var hitRect = svg.querySelector('.medal-chart-hitrect');
+    var tooltip = document.querySelector('.medal-chart-tooltip');
+    var wrap = document.querySelector('.medal-chart-wrap');
+    if(!hitRect || !tooltip || !wrap) return;
+    function xOf(dateStr){
+      var t = new Date(dateStr+'T00:00:00').getTime();
+      var frac = maxT > minT ? (t - minT) / (maxT - minT) : 0.5;
+      return padL + frac * plotW;
+    }
+    function nearestPoint(pxFrac){
+      var t = minT + pxFrac * (maxT - minT);
+      var best = points[0], bestDiff = Infinity;
+      points.forEach(function(p){
+        var pt = new Date(p.date+'T00:00:00').getTime();
+        var diff = Math.abs(pt - t);
+        if(diff < bestDiff){ bestDiff = diff; best = p; }
+      });
+      return best;
+    }
+    function show(clientX){
+      var rect = svg.getBoundingClientRect();
+      var scale = svg.viewBox.baseVal.width / rect.width;
+      var svgX = (clientX - rect.left) * scale;
+      var pxFrac = Math.max(0, Math.min(1, (svgX - padL) / plotW));
+      var p = nearestPoint(pxFrac);
+      var x = xOf(p.date);
+      // yはSVGにすでに描かれたドット要素のcy値から取得する(実点がある場合)
+      var dotEl = svg.querySelector('circle.medal-chart-dot[data-date="'+p.date+'"]');
+      var yPix = dotEl ? Number(dotEl.getAttribute('cy')) : null;
+      if(yPix === null){
+        // real:falseの補間点(今日まで延長した点)はドットが無いため、直前の実点と同じ高さを使う
+        var lastReal = points.filter(function(pp){ return pp.real; }).pop();
+        var lastDotEl = svg.querySelector('circle.medal-chart-dot[data-date="'+lastReal.date+'"]');
+        yPix = lastDotEl ? Number(lastDotEl.getAttribute('cy')) : 0;
+      }
+      crosshair.setAttribute('x1', x); crosshair.setAttribute('x2', x);
+      crosshair.style.opacity = 1;
+      hoverDot.setAttribute('cx', x); hoverDot.setAttribute('cy', yPix);
+      hoverDot.style.opacity = 1;
+      var wrapRect = wrap.getBoundingClientRect();
+      var svgRect = svg.getBoundingClientRect();
+      var tipLeft = (x / svg.viewBox.baseVal.width) * svgRect.width + (svgRect.left - wrapRect.left);
+      var tipTop = (yPix / svg.viewBox.baseVal.height) * svgRect.height + (svgRect.top - wrapRect.top);
+      tooltip.style.left = tipLeft + 'px';
+      tooltip.style.top = (tipTop - 8) + 'px';
+      tooltip.textContent = p.date + '  ' + p.count + '個';
+      tooltip.style.opacity = 1;
+    }
+    function hide(){
+      crosshair.style.opacity = 0;
+      hoverDot.style.opacity = 0;
+      tooltip.style.opacity = 0;
+    }
+    hitRect.addEventListener('mousemove', function(e){ show(e.clientX); });
+    hitRect.addEventListener('mouseleave', hide);
+    hitRect.addEventListener('touchstart', function(e){ if(e.touches[0]) show(e.touches[0].clientX); }, {passive:true});
+    hitRect.addEventListener('touchmove', function(e){ if(e.touches[0]) show(e.touches[0].clientX); }, {passive:true});
+    hitRect.addEventListener('touchend', hide);
+  }
+  function viewMedalsHtml(){
+    var next = MEDAL_MILESTONES.filter(function(n){ return n > medalCount; })[0];
+    var html = '<div class="stack">';
+    html += medalChartHtml();
+    html += '<div class="card panel stack">';
+    html += '<h2 class="section-title">特別な記録帳</h2>';
+    html += '<p class="section-hint">モデルを登録した数に応じて、記念のメダルが届きます。ぞろ目や記念日の数字には、星の飾りが付きます。</p>';
+    html += '<div class="medal-progress">これまでに <b>'+medalCount+'</b> 個のモデルを記録しました。'+
+      (next ? ('次のメダルまであと <b>'+(next-medalCount)+'</b> 個です。') : 'すべてのメダルを獲得しました。')+
+    '</div>';
+    html += '</div>';
+    html += '<div class="card panel"><div class="medal-grid">';
+    html += MEDAL_MILESTONES.map(function(n){
+      var earned = medalsEarned.filter(function(e){ return e.milestone===n; })[0];
+      var dateLabel = earned ? String(earned.awardedAt||'').slice(0,10) : '未達成';
+      return '<div class="medal-card'+(earned?'':' is-locked')+'">'+
+        medalBadgeHtml(n, !!earned)+
+        '<div class="medal-label">'+n+'個目</div>'+
+        '<div class="medal-date">'+escapeHtml(dateLabel)+'</div>'+
+      '</div>';
+    }).join('');
+    html += '</div></div>';
+    html += '</div>';
+    return html;
+  }
+
+  /** モデル登録直後に新しくメダルを獲得していた場合、お祝いのモーダルを表示する。 */
+  function showMedalCelebration(milestone){
+    var ov = document.createElement('div');
+    ov.className = 'modal-overlay modal-overlay-top';
+    ov.innerHTML =
+      '<div class="modal small-modal medal-celebration">'+
+        '<div class="modal-head" style="justify-content:flex-end;"><button class="icon-btn" data-x>&times;</button></div>'+
+        medalBadgeHtml(milestone, true)+
+        '<h3>'+milestone+'個目のメダル獲得！</h3>'+
+        '<p class="section-hint">モデルの記録、おめでとうございます。</p>'+
+        '<div class="modal-foot" style="justify-content:center;">'+
+          '<button type="button" class="btn btn-secondary" data-close>とじる</button>'+
+          '<button type="button" class="btn btn-primary" data-view-medals>特別な記録帳を見る</button>'+
+        '</div>'+
+      '</div>';
+    document.body.appendChild(ov);
+    var close = function(){ ov.remove(); };
+    ov.querySelector('[data-x]').onclick = close;
+    ov.querySelector('[data-close]').onclick = close;
+    ov.querySelector('[data-view-medals]').onclick = function(){ ov.remove(); currentView='medals'; renderApp(); };
+    ov.addEventListener('click', function(e){ if(e.target === ov) ov.remove(); });
+  }
+
   /* ---------- rendering: 月ごとの記録一覧(記録詳細のリンクから遷移) ---------- */
   function viewMonthHtml(){
     var items = modelsList.filter(function(m){
@@ -1067,7 +1436,7 @@
     var thumb = m.coverAssetId ? '<img src="'+blobUrl(m.coverAssetId)+'" alt="" />' : 'no photo';
     return '<div class="card model-card" data-action="open-detail" data-id="'+m.id+'">'+
       '<div class="model-thumb">'+thumb+'</div>'+
-      '<div><h3>'+escapeHtml(m.title)+(m.isPublic===false?' <span class="badge-private">非公開</span>':'')+(m.theme?' <span class="badge-theme">お題</span>':'')+'</h3>'+
+      '<div><h3>'+escapeHtml(m.title)+(m.isPublic===false?' <span class="badge-private">非公開</span>':'')+(m.theme?' <span class="badge-theme">お題</span>':'')+(m.recordMode==='video'?' <span class="badge-video">動画</span>':'')+'</h3>'+
       '<div class="meta">'+m.date+(m.place?' ・ '+escapeHtml(m.place):'')+'</div>'+
       '<div class="meta">記録者: '+escapeHtml(m.createdBy||'匿名')+'</div></div>'+
     '</div>';
@@ -1084,13 +1453,17 @@
   /* ---------- rendering: new record form ---------- */
   function slotCardHtml(slot){
     var p = draft.photos[slot.key];
-    if(!p){
-      return '<div class="slot-card"><div class="slot-label">'+slot.label+'</div>'+
+    var hasPhoto = !!(p && p.assetId);
+    var labelHtml = slot.editableLabel
+      ? '<input type="text" class="slot-label-input" data-slot="'+slot.key+'" value="'+escapeHtml((p&&p.label)||'')+'" placeholder="'+escapeHtml(slot.placeholder||'ラベル')+'" />'
+      : (slot.label ? '<div class="slot-label">'+escapeHtml(slot.label)+'</div>' : '');
+    if(!hasPhoto){
+      return '<div class="slot-card">'+labelHtml+
         '<button type="button" class="slot-empty-btn" data-action="photo-upload-slot" data-slot="'+slot.key+'">＋ 写真を追加</button>'+
         '<input type="file" accept="image/*" id="file-'+slot.key+'" style="display:none" />'+
       '</div>';
     }
-    return '<div class="slot-card has-photo"><div class="slot-label">'+slot.label+'</div>'+
+    return '<div class="slot-card has-photo">'+labelHtml+
       '<div class="slot-thumb-wrap"><img src="'+p.previewUrl+'" alt="" />'+ (p.pins.length ? '<span class="slot-pin-count">ピン '+p.pins.length+'</span>' : '')+'</div>'+
       '<div class="slot-actions"><button type="button" class="btn" data-action="annotate-open" data-slot="'+slot.key+'" data-mode="draft">注釈を編集</button>'+
       '<button type="button" class="btn btn-secondary" data-action="photo-remove" data-slot="'+slot.key+'">削除</button></div>'+
@@ -1113,8 +1486,31 @@
 
     html += '<label class="toggle-row"><input type="checkbox" id="f-ispublic" '+(draft.isPublic?'checked':'')+' /> この記録を他の人にも公開する（チェックを外すと自分だけに表示されます）</label>';
 
-    html += '<div><div class="section-title">写真（最低1枚・最大5方向）</div><div class="section-hint">正面・右・左・上・背面のうち、撮影した角度だけ登録すれば構いません。</div>';
-    html += '<div class="slot-grid">' + SLOTS.map(slotCardHtml).join('') + '</div></div>';
+    html += '<div><div class="section-title">記録の方法</div><div class="section-hint">通常は1枚の写真で十分です。複数の角度や動画で残したいときだけ、下から選んでください。</div>';
+    html += '<div class="row">' + RECORD_MODE_OPTIONS.map(function(o){
+      return '<button type="button" class="chip-btn'+(draft.recordMode===o.key?' is-active':'')+'" data-action="set-record-mode" data-mode="'+o.key+'">'+o.label+'</button>';
+    }).join('') + '</div></div>';
+
+    if(draft.recordMode === 'video'){
+      html += '<div><div class="section-title">動画</div><div class="section-hint">動画は30MBまでアップロードできます。数十秒程度を目安にしてください。動画には、写真のように場所を指定する注釈は付けられません。</div>';
+      if(draft.video && draft.video.assetId){
+        html += '<div class="stack"><video src="'+draft.video.previewUrl+'" controls style="width:100%; max-width:420px; border-radius:var(--radius-m);"></video>'+
+          '<div class="row"><button type="button" class="btn btn-secondary" data-action="video-remove">削除</button></div></div>';
+      } else if(draft.video && draft.video.uploading){
+        html += '<p class="section-hint">アップロード中…</p>';
+      } else {
+        html += '<button type="button" class="btn" data-action="video-upload-slot" style="align-self:flex-start;">＋ 動画を追加</button>'+
+          '<input type="file" accept="video/*" id="file-video" style="display:none" />';
+      }
+      html += '</div>';
+    } else {
+      var modeSlots = slotsForMode(draft.recordMode);
+      var photoTitle = draft.recordMode==='double' ? '写真（2枚まで）' : (draft.recordMode==='cube' ? '写真（最大5方向・立体表示）' : '写真');
+      var photoHint = draft.recordMode==='double' ? 'それぞれの写真に、好きなラベル（例：全体・アップ）を付けられます。'
+        : (draft.recordMode==='cube' ? '正面・右・左・上・背面のうち、撮影した角度だけ登録すれば構いません。' : 'モデル全体が分かる写真を1枚登録します。');
+      html += '<div><div class="section-title">'+photoTitle+'</div><div class="section-hint">'+photoHint+'</div>';
+      html += '<div class="slot-grid">' + modeSlots.map(slotCardHtml).join('') + '</div></div>';
+    }
 
     html += '<label class="field"><span>そのときに気づいたこと</span><textarea id="f-noticed" rows="3" placeholder="モデルを作りながら気づいたことを書き留めます">'+escapeHtml(draft.noticed)+'</textarea></label>';
 
@@ -1141,7 +1537,14 @@
     Array.prototype.forEach.call(document.querySelectorAll('.action-row-input'), function(el){
       el.oninput = function(e){ draft.actions[Number(el.getAttribute('data-idx'))] = e.target.value; };
     });
-    SLOTS.forEach(function(slot){
+    Array.prototype.forEach.call(document.querySelectorAll('.slot-label-input'), function(el){
+      el.oninput = function(e){
+        var key = el.getAttribute('data-slot');
+        if(!draft.photos[key]) draft.photos[key] = {label:'', assetId:null, previewUrl:null, pins:[], relations:[]};
+        draft.photos[key].label = e.target.value;
+      };
+    });
+    slotsForMode(draft.recordMode).forEach(function(slot){
       var input = document.getElementById('file-'+slot.key);
       if(!input) return;
       input.onchange = function(e){
@@ -1149,7 +1552,8 @@
         if(!file) return;
         formError = '';
         apiUploadImage(file).then(function(res){
-          draft.photos[slot.key] = {assetId:res.id, previewUrl:res.url, pins:[], relations:[]};
+          var existingLabel = (draft.photos[slot.key] && draft.photos[slot.key].label) || '';
+          draft.photos[slot.key] = {assetId:res.id, previewUrl:res.url, pins:[], relations:[], label:existingLabel};
           renderView();
         }).catch(function(err){
           formError = '写真のアップロードに失敗しました: '+err.message;
@@ -1157,33 +1561,70 @@
         });
       };
     });
+    var videoInput = document.getElementById('file-video');
+    if(videoInput){
+      videoInput.onchange = function(e){
+        var file = e.target.files[0];
+        if(!file) return;
+        if(file.size > VIDEO_MAX_BYTES){
+          formError = '動画は30MBまでアップロードできます。もう少し短い動画をお試しください。';
+          renderView();
+          return;
+        }
+        formError = '';
+        var localPreview = URL.createObjectURL(file);
+        draft.video = {assetId:null, previewUrl:localPreview, uploading:true};
+        renderView();
+        apiUploadImage(file).then(function(res){
+          if(!draft.video) return; // 直後に削除された場合は無視
+          draft.video.assetId = res.id;
+          draft.video.uploading = false;
+          renderView();
+        }).catch(function(err){
+          draft.video = null;
+          formError = '動画のアップロードに失敗しました: '+err.message;
+          renderView();
+        });
+      };
+    }
   }
 
   async function doSaveNewModel(){
     var title = draft.title.trim();
     var date = draft.date;
-    var hasPhoto = SLOTS.some(function(s){ return !!draft.photos[s.key]; });
+    var isVideo = draft.recordMode === 'video';
+    var modeSlots = slotsForMode(draft.recordMode);
+    var hasContent = isVideo
+      ? !!(draft.video && draft.video.assetId)
+      : modeSlots.some(function(s){ return draft.photos[s.key] && draft.photos[s.key].assetId; });
     if(!title){ formError='タイトルを入力してください。'; renderView(); return; }
     if(!date){ formError='日付を入力してください。'; renderView(); return; }
-    if(!hasPhoto){ formError='写真を少なくとも1枚登録してください。'; renderView(); return; }
+    if(!hasContent){ formError = isVideo ? '動画をアップロードしてください。' : '写真を少なくとも1枚登録してください。'; renderView(); return; }
     formError=''; saving=true; renderView();
     try{
-      var coverSlot = SLOTS.filter(function(s){ return !!draft.photos[s.key]; })[0];
-      var cover = coverSlot ? draft.photos[coverSlot.key] : null;
+      var coverAssetId = '';
+      if(isVideo){
+        coverAssetId = draft.video.assetId;
+      } else {
+        var coverSlot = modeSlots.filter(function(s){ return draft.photos[s.key] && draft.photos[s.key].assetId; })[0];
+        coverAssetId = coverSlot ? draft.photos[coverSlot.key].assetId : '';
+      }
       var modelRes = await apiCall('createModel', {model:{
         title:title, date:date, place:draft.place.trim(), noticed:draft.noticed.trim(),
-        story:draft.story.trim(), coverAssetId: cover ? cover.assetId : '', isPublic: draft.isPublic !== false,
-        theme: draft.theme || ''
+        story:draft.story.trim(), coverAssetId: coverAssetId, isPublic: draft.isPublic !== false,
+        theme: draft.theme || '', recordMode: draft.recordMode, videoAssetId: isVideo ? draft.video.assetId : ''
       }});
       var modelId = modelRes.id;
       var writes = [];
-      SLOTS.forEach(function(s){
-        var p = draft.photos[s.key];
-        if(!p) return;
-        writes.push(apiCall('createPhoto', {photo:{
-          modelId:modelId, slot:s.key, assetId:p.assetId, pins:p.pins||[], relations:p.relations||[]
-        }}));
-      });
+      if(!isVideo){
+        modeSlots.forEach(function(s){
+          var p = draft.photos[s.key];
+          if(!p || !p.assetId) return;
+          writes.push(apiCall('createPhoto', {photo:{
+            modelId:modelId, slot:s.key, assetId:p.assetId, pins:p.pins||[], relations:p.relations||[], label:p.label||''
+          }}));
+        });
+      }
       draft.actions.filter(function(a){ return a.trim(); }).forEach(function(text){
         writes.push(apiCall('createAction', {actionItem:{
           modelId:modelId, modelTitle:title, text:text.trim(), registeredAt:date, checks:computeChecks(date)
@@ -1194,6 +1635,9 @@
       saving = false;
       currentView = 'detail'; currentDetailId = modelId;
       await refreshData(true);
+      if(modelRes.newMedals && modelRes.newMedals.length){
+        showMedalCelebration(modelRes.newMedals[0]);
+      }
     }catch(e){
       console.error(e);
       saving = false;
@@ -1281,8 +1725,7 @@
     var defs = '<defs><marker id="arrow-d-'+photoDoc.slot+'" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4.5" markerHeight="4.5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"></path></marker></defs>';
     var pinsAttr = escapeHtml(JSON.stringify(pins));
     var relsAttr = escapeHtml(JSON.stringify(relations));
-    var slotLabel = SLOTS.filter(function(s){ return s.key===photoDoc.slot; })[0];
-    slotLabel = slotLabel ? slotLabel.label : photoDoc.slot;
+    var slotLabel = resolveSlotLabel(photoDoc);
     return '<div class="photo-stage" data-readonly data-pins="'+pinsAttr+'" data-relations="'+relsAttr+'">'+
         '<img src="'+blobUrl(photoDoc.assetId)+'" alt="'+escapeHtml(slotLabel)+'" />'+
         '<div class="pin-layer">'+pinsHtml+'</div>'+
@@ -1307,12 +1750,26 @@
       '<p class="cube-hint">ドラッグして回転できます（底面は表示されません）</p>'+
     '</div>';
   }
+  /** 1枚・2枚モード用の、立体表示なしのシンプルな写真ギャラリー(各写真に注釈編集ボタン付き)。 */
+  function photoGalleryHtml(m, photos){
+    return '<div class="photo-gallery">' + photos.map(function(p){
+      return '<figure class="photo-block">' + photoStageInnerHtml(p) +
+        '<figcaption><span>'+escapeHtml(resolveSlotLabel(p))+'</span>'+
+        '<button type="button" class="btn btn-secondary" data-action="annotate-open" data-slot="'+p.slot+'" data-mode="existing" data-model-id="'+m.id+'">注釈を編集</button>'+
+        '</figcaption></figure>';
+    }).join('') + '</div>';
+  }
+  /** 動画モード用: Googleドライブのプレビュー(iframe)で再生する。位置を指定する注釈は付けられない。 */
+  function videoEmbedHtml(videoAssetId){
+    return '<div class="video-embed-wrap"><iframe src="https://drive.google.com/file/d/'+videoAssetId+'/preview" allow="autoplay" allowfullscreen></iframe></div>';
+  }
   function viewDetailHtml(){
     var m = modelsList.filter(function(x){ return x.id===currentDetailId; })[0];
     if(!m){
       return '<div class="card panel empty-state">記録が見つかりません。<br><button class="btn" style="margin-top:10px;" data-action="nav" data-view="list">記録一覧に戻る</button></div>';
     }
-    var photos = SLOTS.map(function(s){ return photosList.filter(function(p){ return p.modelId===m.id && p.slot===s.key; })[0]; }).filter(Boolean);
+    var modeSlots = slotsForMode(m.recordMode);
+    var photos = modeSlots.map(function(s){ return photosList.filter(function(p){ return p.modelId===m.id && p.slot===s.key; })[0]; }).filter(Boolean);
     var actions = actionsList.filter(function(a){ return a.modelId===m.id; });
 
     var mDate = new Date(m.date);
@@ -1331,17 +1788,24 @@
 
     if(m.theme){ html += '<div class="notice">お題モードの記録です。お題: <strong>'+escapeHtml(m.theme)+'</strong></div>'; }
 
-    html += '<label class="toggle-row"><input type="checkbox" id="pinToggle" '+(pinsVisible?'checked':'')+' /> ピン・関係の表示</label>';
+    if(m.recordMode !== 'video'){
+      html += '<label class="toggle-row"><input type="checkbox" id="pinToggle" '+(pinsVisible?'checked':'')+' /> ピン・関係の表示</label>';
+    }
 
-    html += photos.length ? cubeHtml(m, photos) : '<p class="section-hint">写真が登録されていません。</p>';
-
-    if(photos.length){
-      html += '<div class="slot-strip">' + photos.map(function(p){
-        var slotDef = SLOTS.filter(function(s){ return s.key===p.slot; })[0];
-        return '<div class="slot-strip-item"><img src="'+blobUrl(p.assetId)+'" alt="" /><span>'+escapeHtml(slotDef.label)+'</span>'+
-          '<button class="btn btn-secondary" data-action="annotate-open" data-slot="'+p.slot+'" data-mode="existing" data-model-id="'+m.id+'">注釈を編集</button>'+
-        '</div>';
-      }).join('') + '</div>';
+    if(m.recordMode === 'video'){
+      html += m.videoAssetId ? videoEmbedHtml(m.videoAssetId) : '<p class="section-hint">動画が登録されていません。</p>';
+    } else if(m.recordMode === 'cube'){
+      html += photos.length ? cubeHtml(m, photos) : '<p class="section-hint">写真が登録されていません。</p>';
+      if(photos.length){
+        html += '<div class="slot-strip">' + photos.map(function(p){
+          var slotDef = SLOTS.filter(function(s){ return s.key===p.slot; })[0];
+          return '<div class="slot-strip-item"><img src="'+blobUrl(p.assetId)+'" alt="" /><span>'+escapeHtml(slotDef.label)+'</span>'+
+            '<button class="btn btn-secondary" data-action="annotate-open" data-slot="'+p.slot+'" data-mode="existing" data-model-id="'+m.id+'">注釈を編集</button>'+
+          '</div>';
+        }).join('') + '</div>';
+      }
+    } else {
+      html += photos.length ? photoGalleryHtml(m, photos) : '<p class="section-hint">写真が登録されていません。</p>';
     }
 
     if(m.story){ html += '<div><div class="section-title">モデルが示すストーリー(全体の概要)</div><p>'+escapeHtml(m.story).replace(/\n/g,'<br>')+'</p></div>'; }
@@ -1491,6 +1955,7 @@
     else if(currentView==='theme'){ el.innerHTML = viewThemeHtml(); }
     else if(currentView==='detail'){ el.innerHTML = viewDetailHtml(); afterDetailRender(); }
     else if(currentView==='checks'){ el.innerHTML = viewChecksHtml(); }
+    else if(currentView==='medals'){ el.innerHTML = viewMedalsHtml(); afterMedalsRender(); }
     renderNav();
     updateUserBar();
   }
@@ -1515,8 +1980,30 @@
     else if(action==='delete-model'){ deleteConfirmId = el.getAttribute('data-id'); renderView(); }
     else if(action==='delete-model-cancel'){ deleteConfirmId = null; renderView(); }
     else if(action==='delete-model-confirm'){ doDeleteModel(el.getAttribute('data-id')); }
+    else if(action==='set-record-mode'){
+      var newMode = el.getAttribute('data-mode');
+      if(newMode !== draft.recordMode){
+        draft.recordMode = newMode;
+        draft.photos = initialPhotosForMode(newMode);
+        draft.video = null;
+        formError = '';
+      }
+      renderView();
+    }
     else if(action==='photo-upload-slot'){ var inp=document.getElementById('file-'+el.getAttribute('data-slot')); if(inp) inp.click(); }
-    else if(action==='photo-remove'){ draft.photos[el.getAttribute('data-slot')] = null; renderView(); }
+    else if(action==='photo-remove'){
+      var removeKey = el.getAttribute('data-slot');
+      var slotDef = slotsForMode(draft.recordMode).filter(function(s){ return s.key===removeKey; })[0];
+      if(slotDef && slotDef.editableLabel){
+        var existingLabel = (draft.photos[removeKey] && draft.photos[removeKey].label) || '';
+        draft.photos[removeKey] = {label:existingLabel, assetId:null, previewUrl:null, pins:[], relations:[]};
+      } else {
+        draft.photos[removeKey] = null;
+      }
+      renderView();
+    }
+    else if(action==='video-upload-slot'){ var vinp=document.getElementById('file-video'); if(vinp) vinp.click(); }
+    else if(action==='video-remove'){ draft.video = null; renderView(); }
     else if(action==='annotate-open'){ openAnnotateForSlot(el.getAttribute('data-slot'), el.getAttribute('data-mode'), el.getAttribute('data-model-id')); }
     else if(action==='action-add-row'){ draft.actions.push(''); renderView(); }
     else if(action==='action-remove-row'){ var idx=Number(el.getAttribute('data-idx')); draft.actions.splice(idx,1); if(draft.actions.length===0) draft.actions.push(''); renderView(); }
