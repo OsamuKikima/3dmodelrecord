@@ -68,6 +68,8 @@
   .masthead .sub{font-family:var(--font-mono); font-size:12px; color:var(--text-muted); letter-spacing:.04em;}
   .manual-link{display:inline-block; margin-top:6px; font-size:12.5px; font-weight:600; text-decoration:none; color:var(--accent);}
   .manual-link:hover{text-decoration:underline;}
+  .lang-toggle{border:1px solid var(--border); background:var(--surface); border-radius:99px; padding:3px 11px; font-size:11.5px; font-weight:700; color:var(--text-muted); font-family:var(--font-mono); letter-spacing:.03em; margin-top:6px;}
+  .lang-toggle:hover{border-color:var(--accent); color:var(--accent);}
 
   .club-banner{
     display:inline-flex; align-items:center; gap:10px;
@@ -333,12 +335,15 @@
           <path d="M27.7 30.1l2.1 2.1 4.3-4.6" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
         </svg>
         <div class="club-banner-text">
-          <h1 class="club-text">モデログ倶楽部</h1>
+          <h1 class="club-text" id="clubNameText">モデログ倶楽部</h1>
           <span class="wordmark" aria-hidden="true"><span class="wm-model">mode</span><span class="wm-l">l</span><span class="wm-log">og</span></span>
         </div>
       </div>
-      <div class="sub">モデルと意味を記録し、ときどきふりかえる</div>
-      <a href="manual.html" target="_blank" rel="noopener" class="manual-link">使い方ガイド &rarr;</a>
+      <div class="sub" id="appSubtitle">モデルと意味を記録し、ときどきふりかえる</div>
+      <div class="row" style="gap:10px; align-items:center; margin-top:2px;">
+        <a href="manual.html" target="_blank" rel="noopener" class="manual-link"><span id="manualLinkText">使い方ガイド</span> &rarr;</a>
+        <button type="button" class="lang-toggle" id="langToggle" data-action="toggle-lang">EN</button>
+      </div>
     </div>
     <div id="userBar" class="user-bar"></div>
   </header>
@@ -368,34 +373,334 @@
      ========================================================= */
   var RECAPTCHA_SITE_KEY = '6LetrLctAAAAAFtDlJwVJ9HGOnoPdoKq4N5W_VYQ'; // ← ここにサイトキーを設定
 
+  /* ---------- i18n ----------
+     画面に表示するUI文言(ラベル・ボタン・見出し・メッセージ)だけを英語にも対応させる。
+     ユーザーが実際に入力したデータ(タイトル・ストーリー・お題の内容など)は翻訳しない。
+     lang は 'ja' または 'en'。localStorageに保存し、次回訪問時も維持する。 */
+  var I18N = {
+    ja: {
+      app_title:'モデログ', club_name:'モデログ倶楽部',
+      app_subtitle:'モデルと意味を記録し、ときどきふりかえる', manual_link:'使い方ガイド',
+      lang_toggle_label:'EN',
+      welcome:'ようこそ、<b>{name}</b>さん', logout:'ログアウト',
+      notice_api_url_missing:'API_URLが未設定です。「セットアップ手順.md」に沿ってApps ScriptウェブアプリのURLをこのページ(index.html)先頭のAPI_URLに設定してください。',
+      notice_api_url_missing_save:'API_URLが未設定です。保存するにはindex.html内のAPI_URLにApps ScriptウェブアプリのURLを設定してください。',
+      sync_note_unset:'API_URL未設定', sync_note_error:'同期エラー', sync_note_updated:'最終更新 {time}',
+      auth_reset_title:'パスワードの再設定', auth_new_password:'新しいパスワード（6文字以上）',
+      auth_new_password_confirm:'新しいパスワード（確認）', auth_processing:'処理中…',
+      auth_reset_submit:'パスワードを再設定する', auth_back_to_login:'ログイン画面に戻る',
+      auth_tab_login:'ログイン', auth_tab_register:'新規登録', auth_email:'メールアドレス', auth_password:'パスワード',
+      auth_login_submit:'ログイン', auth_forgot_password:'パスワードをお忘れですか？',
+      auth_forgot_hint:'登録済みのメールアドレスを入力してください。パスワード再設定用のリンクをお送りします。',
+      auth_sending:'送信中…', auth_send_reset_link:'再設定用のリンクを送る',
+      auth_display_name:'表示名', auth_display_name_placeholder:'記録に表示される名前',
+      auth_password_min:'パスワード（6文字以上）', auth_password_confirm:'パスワード（確認）',
+      auth_recaptcha_missing:'RECAPTCHA_SITE_KEYが未設定のため、ロボット確認は現在スキップされています。',
+      auth_register_submit:'登録する',
+      err_login_required:'メールアドレスとパスワードを入力してください。',
+      err_email_format:'メールアドレスの形式で入力してください。',
+      err_password_min:'パスワードは6文字以上にしてください。', err_password_mismatch:'パスワードが一致しません。',
+      err_recaptcha_required:'「ロボットではありません」にチェックを入れてください。',
+      err_email_required:'メールアドレスを入力してください。',
+      msg_reset_email_sent:'入力されたメールアドレス宛にパスワード再設定用のリンクを送信しました（該当するアカウントが無い場合はメールは届きません）。メールをご確認ください。',
+      err_new_password_required:'新しいパスワードを入力してください。',
+      msg_password_reset_done:'パスワードを再設定しました。新しいパスワードでログインしてください。',
+      err_session_expired:'セッションの有効期限が切れました。再度ログインしてください。',
+      err_api_generic:'APIエラーが発生しました。',
+      err_no_response:'サーバーからの応答がありませんでした。しばらくしてから再度お試しください。',
+      err_api_url_unset:'API_URLが設定されていません。index.html先頭のAPI_URLにApps ScriptウェブアプリのURLを設定してください。',
+      err_load_failed:'記録の読み込みに失敗しました: {msg}',
+      nav_list:'記録一覧', nav_new:'新規記録', nav_theme:'お題モード', nav_checks:'アクションチェック', nav_medals:'特別な記録',
+      theme_title:'お題モード', theme_hint:'ランダムなお題を引いて、そのお題に沿ってモデルを作り、写真で記録していくモードです。',
+      theme_current_label:'今回のお題', theme_start_record:'このお題でモデルを記録する', theme_redraw:'お題を引き直す',
+      theme_draw:'お題を引く', theme_past_records:'これまでのお題モードの記録', theme_no_records:'まだお題モードの記録はありません。',
+      theme_admin_title:'お題を管理する（管理者のみ）',
+      theme_admin_hint:'ここで追加・編集・削除したお題が、全員の「お題を引く」に反映されます。',
+      theme_admin_empty:'お題が登録されていません。', theme_save:'保存', theme_cancel:'キャンセル', theme_edit:'編集', theme_delete:'削除',
+      theme_new_placeholder:'新しいお題を入力（例：理想の休日を表すモデル）', theme_add:'追加する',
+      err_theme_text_required:'お題の内容を入力してください。', err_theme_add_failed:'追加に失敗しました: {msg}',
+      err_theme_update_failed:'更新に失敗しました: {msg}', err_theme_delete_failed:'削除に失敗しました: {msg}',
+      medal_chart_title:'登録数の推移', medal_chart_empty:'記録を始めると、ここに登録数の推移グラフが表示されます。',
+      medal_chart_axis_hint:'横軸: 記録日　縦軸: 累積個数（現在 <b>{n}</b> 個）',
+      medal_chart_aria:'これまでに合計{n}個のモデルを記録した、日付ごとの累積登録数の推移グラフ',
+      medal_book_title:'特別な記録帳',
+      medal_book_hint:'モデルを登録した数に応じて、記念のメダルが届きます。ぞろ目や記念日の数字には、星の飾りが付きます。',
+      medal_progress_recorded:'これまでに <b>{n}</b> 個のモデルを記録しました。', medal_progress_next:'次のメダルまであと <b>{n}</b> 個です。',
+      medal_progress_all:'すべてのメダルを獲得しました。', medal_label:'{n}個目', medal_not_earned:'未達成',
+      medal_celebration_title:'{n}個目のメダル獲得！', medal_celebration_hint:'モデルの記録、おめでとうございます。',
+      medal_close:'とじる', medal_view_book:'特別な記録帳を見る',
+      month_prev:'‹ 前の月', month_next:'次の月 ›', month_empty:'この月の記録はまだありません。',
+      badge_private:'非公開', badge_theme:'お題', badge_video:'動画', recorder_label:'記録者: {name}', anonymous:'匿名',
+      list_empty:'まだ記録がありません。「新規記録」から最初のモデルを登録しましょう。',
+      back_to_list:'← 一覧へ戻る',
+      new_record_title:'新規モデル記録', field_title:'タイトル', field_title_placeholder:'例）チームの未来像モデル',
+      field_date:'日付', field_place:'場所・イベント', field_place_placeholder:'例）第3回LSPワークショップ',
+      recorder_prefix:'記録者: {name}',
+      field_story:'モデルが示すストーリー（全体の概要）', field_story_placeholder:'このモデル全体で表現しているストーリーや世界観を書きます',
+      toggle_public:'この記録を他の人にも公開する（チェックを外すと自分だけに表示されます）',
+      theme_mode_notice:'お題モードで記録中です。お題: <strong>{theme}</strong>',
+      record_method_title:'記録の方法',
+      record_method_hint:'通常は1枚の写真で十分です。複数の角度や動画で残したいときだけ、下から選んでください。',
+      mode_single:'1枚で記録する（標準）', mode_double:'2枚で記録する', mode_cube:'5枚（立体）で記録する', mode_video:'動画で記録する',
+      video_section_title:'動画',
+      video_section_hint:'動画は30MBまでアップロードできます。数十秒程度を目安にしてください。動画には、写真のように場所を指定する注釈は付けられません。',
+      video_remove:'削除', video_uploading:'アップロード中…', video_add:'＋ 動画を追加',
+      photo_title_double:'写真（2枚まで）', photo_title_cube:'写真（最大5方向・立体表示）', photo_title_single:'写真',
+      photo_hint_double:'それぞれの写真に、好きなラベル（例：全体・アップ）を付けられます。',
+      photo_hint_cube:'正面・右・左・上・背面のうち、撮影した角度だけ登録すれば構いません。',
+      photo_hint_single:'モデル全体が分かる写真を1枚登録します。',
+      field_noticed:'そのときに気づいたこと', field_noticed_placeholder:'モデルを作りながら気づいたことを書き留めます',
+      actions_title:'明日からのアクション', actions_hint:'3日後・1週間後・1ヶ月後・3ヶ月後にチェックを行います。',
+      action_placeholder:'例）毎朝チームに一言共有する', action_remove:'削除', action_add:'＋ アクションを追加',
+      save_record:'この記録を保存', saving:'保存中…',
+      slot_add_photo:'＋ 写真を追加', slot_pin_count:'ピン {n}', slot_annotate:'注釈を編集', slot_remove:'削除',
+      slot_label_placeholder_default:'ラベル', slot_double1_placeholder:'例：全体', slot_double2_placeholder:'例：アップ',
+      slot_front:'正面から', slot_right:'右から', slot_left:'左から', slot_top:'上から', slot_back:'背面から',
+      photo_fallback_label:'写真', cube_unphotographed:'未撮影', cube_hint:'ドラッグして回転できます（底面は表示されません）',
+      err_title_required:'タイトルを入力してください。', err_date_required:'日付を入力してください。',
+      err_video_required:'動画をアップロードしてください。', err_photo_required:'写真を少なくとも1枚登録してください。',
+      err_save_failed:'保存に失敗しました: {msg}', err_photo_upload_failed:'写真のアップロードに失敗しました: {msg}',
+      err_video_upload_failed:'動画のアップロードに失敗しました: {msg}',
+      err_video_too_large:'動画は30MBまでアップロードできます。もう少し短い動画をお試しください。',
+      err_delete_failed:'削除に失敗しました: {msg}', err_check_save_failed:'チェックの保存に失敗しました。',
+      public_badge_hint:'この記録は非公開に設定されています。あなた以外には表示されません。',
+      theme_record_notice:'お題モードの記録です。お題: <strong>{theme}</strong>',
+      pin_toggle_label:'ピン・関係の表示', no_video_registered:'動画が登録されていません。', no_photo_registered:'写真が登録されていません。',
+      story_title:'モデルが示すストーリー(全体の概要)', noticed_title:'そのときに気づいたこと',
+      no_actions_registered:'登録されたアクションはありません。', registered_on:'登録日 {date}', checks_stopped:'以降のチェックは停止済み',
+      check_record_btn:'記録する',
+      delete_confirm_msg:'この記録(写真・アクションを含む)を削除します。この操作は取り消せません。本当によろしいですか？',
+      delete_confirm_btn:'削除する', deleting:'削除中…', delete_cancel:'キャンセル', delete_record_btn:'この記録を削除する',
+      record_not_found:'記録が見つかりません。', back_to_list_btn:'記録一覧に戻る',
+      annotate_title:'{label}の注釈', annotate_add_pin:'部分を追加', annotate_add_relation:'関係を追加', annotate_deselect:'選択解除',
+      annotate_hint_pin:'写真の中をクリックして「部分」を登録します。既存のピンをクリックすると編集できます。',
+      annotate_hint_relation_first:'関係の起点となる部分（ピン）をクリックしてください。',
+      annotate_hint_relation_second:'もう一方の部分（ピン）をクリックして関係を作成します。',
+      annotate_hint_view:'ピンをクリックすると、その部分の名称と意味を確認できます。',
+      annotate_parts_heading:'部分 ({n})', annotate_relations_heading:'関係 ({n})', annotate_empty:'まだありません',
+      annotate_delete:'削除', annotate_done:'完了',
+      field_meaning:'意味するもの', field_relation_meaning:'その矢印が意味するもの', dialog_relation_title:'関係',
+      field_part_name:'どのブロック・表現を指している？', field_part_meaning:'その部分の意味するもの',
+      dialog_edit_part:'部分を編集', dialog_new_part:'部分の意味を記録する', dialog_new_relation:'関係を登録',
+      dialog_close:'閉じる', dialog_save:'保存',
+      check_form_title:'アクションチェック ({label})', check_score_label:'実施できましたか（5点満点）',
+      check_comment_label:'感想', check_stop_label:'今後はアクションチェックをしない',
+      check_d3:'3日後', check_w1:'1週間後', check_m1:'1ヶ月後', check_m3:'3ヶ月後',
+      check_status_done:'済 ({n}点)', check_status_excluded:'対象外', check_status_due:'要チェック', check_status_upcoming:'{date}〜',
+      checks_due_title:'今すぐチェックが必要なアクション（{n}）', checks_due_empty:'現在、期限を迎えているアクションチェックはありません。',
+      checks_upcoming_title:'今後の予定', checks_upcoming_empty:'予定されているチェックはありません。',
+      checks_due_date_label:'（期日 {date}）', checks_upcoming_date_label:'（{date}）'
+    },
+    en: {
+      app_title:'Modelog', club_name:'Modelog Club',
+      app_subtitle:'Record your models and their meaning, and look back now and then', manual_link:'User guide',
+      lang_toggle_label:'日本語',
+      welcome:'Welcome, <b>{name}</b>', logout:'Log out',
+      notice_api_url_missing:'API_URL is not set. Please follow セットアップ手順.md (setup instructions) and set the Apps Script web app URL in API_URL at the top of this page (index.html).',
+      notice_api_url_missing_save:'API_URL is not set. To save, please set the Apps Script web app URL in API_URL inside index.html.',
+      sync_note_unset:'API_URL not set', sync_note_error:'Sync error', sync_note_updated:'Last updated {time}',
+      auth_reset_title:'Reset your password', auth_new_password:'New password (6+ characters)',
+      auth_new_password_confirm:'New password (confirm)', auth_processing:'Processing…',
+      auth_reset_submit:'Reset password', auth_back_to_login:'Back to login',
+      auth_tab_login:'Log in', auth_tab_register:'Sign up', auth_email:'Email address', auth_password:'Password',
+      auth_login_submit:'Log in', auth_forgot_password:'Forgot your password?',
+      auth_forgot_hint:'Enter your registered email address and we\'ll send you a password reset link.',
+      auth_sending:'Sending…', auth_send_reset_link:'Send reset link',
+      auth_display_name:'Display name', auth_display_name_placeholder:'The name shown on your records',
+      auth_password_min:'Password (6+ characters)', auth_password_confirm:'Password (confirm)',
+      auth_recaptcha_missing:'RECAPTCHA_SITE_KEY is not set, so the robot check is currently skipped.',
+      auth_register_submit:'Sign up',
+      err_login_required:'Please enter your email address and password.',
+      err_email_format:'Please enter a valid email address.',
+      err_password_min:'Password must be at least 6 characters.', err_password_mismatch:'Passwords do not match.',
+      err_recaptcha_required:'Please check "I\'m not a robot".',
+      err_email_required:'Please enter your email address.',
+      msg_reset_email_sent:'We\'ve sent a password reset link to the email address you entered (if no matching account exists, no email will arrive). Please check your inbox.',
+      err_new_password_required:'Please enter a new password.',
+      msg_password_reset_done:'Your password has been reset. Please log in with your new password.',
+      err_session_expired:'Your session has expired. Please log in again.',
+      err_api_generic:'An API error occurred.',
+      err_no_response:'No response from the server. Please try again in a moment.',
+      err_api_url_unset:'API_URL is not set. Please set the Apps Script web app URL in API_URL at the top of index.html.',
+      err_load_failed:'Failed to load records: {msg}',
+      nav_list:'Records', nav_new:'New record', nav_theme:'Theme mode', nav_checks:'Action checks', nav_medals:'Special records',
+      theme_title:'Theme mode', theme_hint:'Draw a random prompt, build a model based on it, and record it with photos.',
+      theme_current_label:'This round\'s prompt', theme_start_record:'Record a model for this prompt', theme_redraw:'Draw again',
+      theme_draw:'Draw a prompt', theme_past_records:'Past theme-mode records', theme_no_records:'No theme-mode records yet.',
+      theme_admin_title:'Manage prompts (admin only)',
+      theme_admin_hint:'Prompts added, edited, or deleted here apply to everyone\'s "Draw a prompt".',
+      theme_admin_empty:'No prompts have been added yet.', theme_save:'Save', theme_cancel:'Cancel', theme_edit:'Edit', theme_delete:'Delete',
+      theme_new_placeholder:'Enter a new prompt (e.g. a model representing your ideal day off)', theme_add:'Add',
+      err_theme_text_required:'Please enter the prompt text.', err_theme_add_failed:'Failed to add: {msg}',
+      err_theme_update_failed:'Failed to update: {msg}', err_theme_delete_failed:'Failed to delete: {msg}',
+      medal_chart_title:'Registration trend', medal_chart_empty:'Once you start recording, a chart of your registration trend will appear here.',
+      medal_chart_axis_hint:'X-axis: record date &nbsp; Y-axis: cumulative count (currently <b>{n}</b>)',
+      medal_chart_aria:'A line chart of cumulative registrations by date, showing a total of {n} models recorded so far',
+      medal_book_title:'Special records book',
+      medal_book_hint:'Milestone medals arrive as you register more models. Repeating digits and memorable numbers get a star.',
+      medal_progress_recorded:'You\'ve recorded <b>{n}</b> models so far.', medal_progress_next:'<b>{n}</b> more to your next medal.',
+      medal_progress_all:'You\'ve earned every medal.', medal_label:'#{n}', medal_not_earned:'Not yet',
+      medal_celebration_title:'You earned medal #{n}!', medal_celebration_hint:'Congratulations on recording your model.',
+      medal_close:'Close', medal_view_book:'View special records book',
+      month_prev:'‹ Previous month', month_next:'Next month ›', month_empty:'No records for this month yet.',
+      badge_private:'Private', badge_theme:'Theme', badge_video:'Video', recorder_label:'Recorded by: {name}', anonymous:'Anonymous',
+      list_empty:'No records yet. Register your first model from "New record".',
+      back_to_list:'← Back to list',
+      new_record_title:'New model record', field_title:'Title', field_title_placeholder:'e.g. A model of our team\'s future',
+      field_date:'Date', field_place:'Location / event', field_place_placeholder:'e.g. 3rd LSP workshop',
+      recorder_prefix:'Recorded by: {name}',
+      field_story:'The story the model tells (overall summary)', field_story_placeholder:'Describe the story or world this model expresses as a whole',
+      toggle_public:'Share this record with others (uncheck to keep it visible only to you)',
+      theme_mode_notice:'Recording in theme mode. Prompt: <strong>{theme}</strong>',
+      record_method_title:'Recording method',
+      record_method_hint:'Usually one photo is enough. Only choose another option below if you want multiple angles or a video.',
+      mode_single:'1 photo (standard)', mode_double:'2 photos', mode_cube:'5 photos (3D cube)', mode_video:'Video',
+      video_section_title:'Video',
+      video_section_hint:'Videos can be up to 30MB. Aim for something around ten to thirty seconds. Videos can\'t have position-based annotations like photos.',
+      video_remove:'Remove', video_uploading:'Uploading…', video_add:'+ Add video',
+      photo_title_double:'Photos (up to 2)', photo_title_cube:'Photos (up to 5 angles, 3D view)', photo_title_single:'Photo',
+      photo_hint_double:'Give each photo its own label (e.g. "Overall", "Close-up").',
+      photo_hint_cube:'Register only the angles you photographed — front, right, left, top, back.',
+      photo_hint_single:'Register a single photo showing the whole model.',
+      field_noticed:'What you noticed', field_noticed_placeholder:'Jot down what you noticed while building the model',
+      actions_title:'Actions starting tomorrow', actions_hint:'You\'ll check in after 3 days, 1 week, 1 month, and 3 months.',
+      action_placeholder:'e.g. Share one line with the team every morning', action_remove:'Remove', action_add:'+ Add action',
+      save_record:'Save this record', saving:'Saving…',
+      slot_add_photo:'+ Add photo', slot_pin_count:'{n} pins', slot_annotate:'Edit annotations', slot_remove:'Remove',
+      slot_label_placeholder_default:'Label', slot_double1_placeholder:'e.g. Overall', slot_double2_placeholder:'e.g. Close-up',
+      slot_front:'From the front', slot_right:'From the right', slot_left:'From the left', slot_top:'From above', slot_back:'From the back',
+      photo_fallback_label:'Photo', cube_unphotographed:'Not photographed', cube_hint:'Drag to rotate (the bottom face isn\'t shown)',
+      err_title_required:'Please enter a title.', err_date_required:'Please enter a date.',
+      err_video_required:'Please upload a video.', err_photo_required:'Please register at least one photo.',
+      err_save_failed:'Failed to save: {msg}', err_photo_upload_failed:'Failed to upload photo: {msg}',
+      err_video_upload_failed:'Failed to upload video: {msg}',
+      err_video_too_large:'Videos can be up to 30MB. Please try a shorter video.',
+      err_delete_failed:'Failed to delete: {msg}', err_check_save_failed:'Failed to save the check.',
+      public_badge_hint:'This record is set to private. It isn\'t visible to anyone but you.',
+      theme_record_notice:'This is a theme-mode record. Prompt: <strong>{theme}</strong>',
+      pin_toggle_label:'Show pins & relations', no_video_registered:'No video has been registered.', no_photo_registered:'No photos have been registered.',
+      story_title:'The story the model tells (overall summary)', noticed_title:'What was noticed',
+      no_actions_registered:'No actions have been registered.', registered_on:'Registered on {date}', checks_stopped:'Later checks stopped',
+      check_record_btn:'Record',
+      delete_confirm_msg:'This will delete this record, including its photos and actions. This can\'t be undone. Are you sure?',
+      delete_confirm_btn:'Delete', deleting:'Deleting…', delete_cancel:'Cancel', delete_record_btn:'Delete this record',
+      record_not_found:'Record not found.', back_to_list_btn:'Back to record list',
+      annotate_title:'Annotations for {label}', annotate_add_pin:'Add part', annotate_add_relation:'Add relation', annotate_deselect:'Deselect',
+      annotate_hint_pin:'Click inside the photo to register a "part". Click an existing pin to edit it.',
+      annotate_hint_relation_first:'Click the part (pin) the relation should start from.',
+      annotate_hint_relation_second:'Click the other part (pin) to create the relation.',
+      annotate_hint_view:'Click a pin to see that part\'s name and meaning.',
+      annotate_parts_heading:'Parts ({n})', annotate_relations_heading:'Relations ({n})', annotate_empty:'None yet',
+      annotate_delete:'Remove', annotate_done:'Done',
+      field_meaning:'What it means', field_relation_meaning:'What this arrow means', dialog_relation_title:'Relation',
+      field_part_name:'Which block or expression does this point to?', field_part_meaning:'What this part means',
+      dialog_edit_part:'Edit part', dialog_new_part:'Record what this part means', dialog_new_relation:'Register a relation',
+      dialog_close:'Close', dialog_save:'Save',
+      check_form_title:'Action check ({label})', check_score_label:'How well did you follow through? (out of 5)',
+      check_comment_label:'Comment', check_stop_label:'Stop checking this action going forward',
+      check_d3:'After 3 days', check_w1:'After 1 week', check_m1:'After 1 month', check_m3:'After 3 months',
+      check_status_done:'Done ({n}/5)', check_status_excluded:'Excluded', check_status_due:'Check needed', check_status_upcoming:'From {date}',
+      checks_due_title:'Actions needing a check now ({n})', checks_due_empty:'No action checks are currently due.',
+      checks_upcoming_title:'Upcoming', checks_upcoming_empty:'No upcoming checks scheduled.',
+      checks_due_date_label:'(due {date})', checks_upcoming_date_label:'({date})'
+    }
+  };
+  var lang = 'ja';
+  try{ var savedLang = localStorage.getItem('mol_lang'); if(savedLang==='en'||savedLang==='ja') lang = savedLang; }catch(e){}
+  /** UI文言を1件取り出す。{key}形式のプレースホルダーをvarsで置換する。 */
+  function t(key, vars){
+    var dict = I18N[lang] || I18N.ja;
+    var s = Object.prototype.hasOwnProperty.call(dict, key) ? dict[key] : (I18N.ja[key] || key);
+    if(vars){
+      Object.keys(vars).forEach(function(k){ s = s.split('{'+k+'}').join(vars[k]); });
+    }
+    return s;
+  }
+  var EN_MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  /** 「◯年◯月の記録」のような、言語に応じた月見出しを作る(monthIndex0は0始まり)。 */
+  function monthTitle(year, monthIndex0){
+    return lang==='en' ? (EN_MONTHS[monthIndex0]+' '+year+' records') : (year+'年 '+(monthIndex0+1)+'月の記録');
+  }
+  /** 「◯年◯月の記録一覧」ボタンなど、見出しより短い文脈向けの月リンク文言。 */
+  function monthLinkLabel(year, monthIndex0){
+    return lang==='en' ? (EN_MONTHS[monthIndex0]+' '+year+' record list') : (year+'年'+(monthIndex0+1)+'月の記録一覧');
+  }
+  /** 静的HTML(ヘッダーのバナー・言語切り替えボタンなど、JSの再描画対象外の部分)の文言を反映する。 */
+  function applyStaticText(){
+    document.title = t('app_title');
+    document.documentElement.lang = lang;
+    var clubEl = document.getElementById('clubNameText'); if(clubEl) clubEl.textContent = t('club_name');
+    var subEl = document.getElementById('appSubtitle'); if(subEl) subEl.textContent = t('app_subtitle');
+    var manualEl = document.getElementById('manualLinkText'); if(manualEl) manualEl.textContent = t('manual_link');
+    var langBtn = document.getElementById('langToggle'); if(langBtn) langBtn.textContent = t('lang_toggle_label');
+  }
+  /** 言語を切り替えて、静的部分・アプリ部分の両方を再描画する。 */
+  function setLang(l){
+    if(l !== 'ja' && l !== 'en') return;
+    lang = l;
+    try{ localStorage.setItem('mol_lang', l); }catch(e){}
+    applyStaticText();
+    renderApp();
+  }
+
+  /* サーバー(Code.gs)から返るエラーメッセージは常に日本語の固定文言なので、
+     英語表示中はここでの対訳に置き換える(Code.gs自体は翻訳・再デプロイ不要)。
+     一致しないメッセージはそのまま(日本語のまま)表示する。 */
+  var SERVER_MSG_EN = {
+    'ログインが必要です。':'Please log in.',
+    'ログインの有効期限が切れました。再度ログインしてください。':'Your login has expired. Please log in again.',
+    'お題が見つかりません。':'Prompt not found.',
+    'お題の内容を入力してください。':'Please enter the prompt text.',
+    'この操作は管理者のみ実行できます。':'Only an administrator can perform this action.',
+    'この記録を削除できるのは、登録した本人のみです。':'Only the person who registered this record can delete it.',
+    'そのメールアドレスは既に登録されています。':'That email address is already registered.',
+    'パスワードは6文字以上にしてください。':'Password must be at least 6 characters.',
+    'メールアドレスとパスワードを入力してください。':'Please enter your email address and password.',
+    'メールアドレスの形式で入力してください。':'Please enter a valid email address.',
+    'メールアドレスまたはパスワードが違います。':'Incorrect email address or password.',
+    'メールアドレスを入力してください。':'Please enter your email address.',
+    'リンクが無効です。もう一度パスワード再設定をお試しください。':'This link is invalid. Please request a password reset again.',
+    '無効なリンクです。もう一度パスワード再設定をお試しください。':'This link is invalid. Please request a password reset again.',
+    'リンクの有効期限が切れています。もう一度パスワード再設定をお試しください。':'This link has expired. Please request a password reset again.',
+    '画像データがありません':'No image data was provided',
+    '記録が見つかりません。':'Record not found.'
+  };
+  var SERVER_MSG_EN_PREFIX = {
+    'ロボット確認に失敗しました。もう一度お試しください。':'Robot verification failed. Please try again.',
+    'パスワード再設定メールの送信に失敗しました: ':'Failed to send the password reset email: '
+  };
+  function serverMsg(msg){
+    if(lang !== 'en' || !msg) return msg;
+    if(SERVER_MSG_EN[msg]) return SERVER_MSG_EN[msg];
+    var matchedKey = Object.keys(SERVER_MSG_EN_PREFIX).filter(function(k){ return msg.indexOf(k) === 0; })[0];
+    if(matchedKey) return SERVER_MSG_EN_PREFIX[matchedKey] + msg.slice(matchedKey.length);
+    return msg;
+  }
+
   /* ---------- constants ---------- */
   var SLOTS = [
-    {key:'front', label:'正面から'},
-    {key:'right', label:'右から'},
-    {key:'left',  label:'左から'},
-    {key:'top',   label:'上から'},
-    {key:'back',  label:'背面から'}
+    {key:'front'}, {key:'right'}, {key:'left'}, {key:'top'}, {key:'back'}
   ];
+  /** 立体モードの固定5方向のラベルを言語に応じて返す。 */
+  function fixedSlotLabel(key){ return t('slot_'+key); }
   var CHECK_ORDER = ['d3','w1','m1','m3'];
-  var CHECK_LABELS = {d3:'3日後', w1:'1週間後', m1:'1ヶ月後', m3:'3ヶ月後'};
+  /** アクションチェックの4つのタイミングのラベルを言語に応じて返す。 */
+  function checkLabel(key){ return t('check_'+key); }
   var POLL_INTERVAL_MS = 25000;
 
   /* 記録写真は1枚を標準とし、複数枚・立体・動画にしたい場合だけ選んでもらう。
      サーバー側 RECORD_MODES と必ず同じキーにすること。 */
-  var RECORD_MODE_OPTIONS = [
-    {key:'single', label:'1枚で記録する（標準）'},
-    {key:'double', label:'2枚で記録する'},
-    {key:'cube',   label:'5枚（立体）で記録する'},
-    {key:'video',  label:'動画で記録する'}
-  ];
+  var RECORD_MODE_OPTIONS = ['single', 'double', 'cube', 'video'];
+  /** 記録モードのチップに表示するラベルを言語に応じて返す。 */
+  function recordModeLabel(key){ return t('mode_'+key); }
   var VIDEO_MAX_BYTES = 30 * 1024 * 1024; // 30MB
 
   /** 選択中の記録モードに応じた写真スロットの定義を返す(動画モードはスロットを使わないので空配列)。 */
   function slotsForMode(mode){
     if(mode === 'single') return [{key:'main'}];
     if(mode === 'double') return [
-      {key:'double1', editableLabel:true, placeholder:'例：全体'},
-      {key:'double2', editableLabel:true, placeholder:'例：アップ'}
+      {key:'double1', editableLabel:true, placeholder:t('slot_double1_placeholder')},
+      {key:'double2', editableLabel:true, placeholder:t('slot_double2_placeholder')}
     ];
     if(mode === 'cube') return SLOTS;
     return [];
@@ -412,8 +717,8 @@
   function resolveSlotLabel(photoDoc){
     if(photoDoc.label) return photoDoc.label;
     var slotDef = SLOTS.filter(function(s){ return s.key===photoDoc.slot; })[0];
-    if(slotDef) return slotDef.label;
-    return '写真';
+    if(slotDef) return fixedSlotLabel(slotDef.key);
+    return t('photo_fallback_label');
   }
 
   /* お題モード用のお題プールのフォールバック。本来はサーバー(Themesシート)から
@@ -524,10 +829,10 @@
   }
   function checkStatus(action, key){
     var c = action.checks[key];
-    if(c.done) return {text:'済 ('+c.score+'点)', cls:'good'};
-    if(action.stopped) return {text:'対象外', cls:''};
-    if(c.due <= todayStr()) return {text:'要チェック', cls:'danger'};
-    return {text:c.due+'〜', cls:''};
+    if(c.done) return {text:t('check_status_done',{n:c.score}), cls:'good'};
+    if(action.stopped) return {text:t('check_status_excluded'), cls:''};
+    if(c.due <= todayStr()) return {text:t('check_status_due'), cls:'danger'};
+    return {text:t('check_status_upcoming',{date:c.due}), cls:''};
   }
   function dueChecksFor(action){
     if(action.stopped) return [];
@@ -562,7 +867,7 @@
   var apiCallQueueTail = Promise.resolve();
   function apiCall(action, payload){
     if(!API_URL){
-      return Promise.reject(new Error('API_URLが設定されていません。index.html先頭のAPI_URLにApps ScriptウェブアプリのURLを設定してください。'));
+      return Promise.reject(new Error(t('err_api_url_unset')));
     }
     var run = function(){ return apiCallSingle(action, payload); };
     var result = apiCallQueueTail.then(run, run);
@@ -608,12 +913,12 @@
         cleanup();
         var json = data.result;
         if(!json || json.ok !== true){
-          var msg = (json && json.error) || 'APIエラーが発生しました。';
+          var msg = (json && json.error) || t('err_api_generic');
           if(msg.indexOf('AUTH_REQUIRED:') === 0){
             forceLogout();
             msg = msg.slice('AUTH_REQUIRED:'.length);
           }
-          reject(new Error(msg));
+          reject(new Error(serverMsg(msg)));
           return;
         }
         resolve(json.data);
@@ -623,7 +928,7 @@
         if(settled) return;
         settled = true;
         cleanup();
-        reject(new Error('サーバーからの応答がありませんでした。しばらくしてから再度お試しください。'));
+        reject(new Error(t('err_no_response')));
       }, 45000);
 
       try{
@@ -638,7 +943,7 @@
     try{ localStorage.removeItem('mol_session'); }catch(e){}
     currentView = 'list';
     authMode = 'login';
-    authError = 'セッションの有効期限が切れました。再度ログインしてください。';
+    authError = t('err_session_expired');
     renderApp();
   }
   function fileToBase64(file){
@@ -669,38 +974,38 @@
   function authHtml(){
     var html = '<div class="card panel stack auth-card">';
     if(authMode === 'reset'){
-      html += '<h2 class="section-title">パスワードの再設定</h2>';
+      html += '<h2 class="section-title">'+t('auth_reset_title')+'</h2>';
       if(authError) html += '<div class="notice error">'+escapeHtml(authError)+'</div>';
       if(authSuccess) html += '<div class="notice">'+escapeHtml(authSuccess)+'</div>';
-      html += '<label class="field"><span>新しいパスワード（6文字以上）</span><input type="password" id="auth-newpassword" autocomplete="new-password" /></label>';
-      html += '<label class="field"><span>新しいパスワード（確認）</span><input type="password" id="auth-newpassword2" autocomplete="new-password" /></label>';
-      html += '<button type="button" class="btn btn-primary" data-action="do-reset-password" '+(authBusy?'disabled':'')+'>'+(authBusy?'処理中…':'パスワードを再設定する')+'</button>';
-      html += '<button type="button" class="btn-danger-text" data-action="auth-mode" data-mode="login" style="align-self:flex-start;">ログイン画面に戻る</button>';
+      html += '<label class="field"><span>'+t('auth_new_password')+'</span><input type="password" id="auth-newpassword" autocomplete="new-password" /></label>';
+      html += '<label class="field"><span>'+t('auth_new_password_confirm')+'</span><input type="password" id="auth-newpassword2" autocomplete="new-password" /></label>';
+      html += '<button type="button" class="btn btn-primary" data-action="do-reset-password" '+(authBusy?'disabled':'')+'>'+(authBusy?t('auth_processing'):t('auth_reset_submit'))+'</button>';
+      html += '<button type="button" class="btn-danger-text" data-action="auth-mode" data-mode="login" style="align-self:flex-start;">'+t('auth_back_to_login')+'</button>';
       html += '</div>';
       return html;
     }
-    html += '<div class="auth-tabs"><button type="button" class="chip-btn'+(authMode==='login'?' is-active':'')+'" data-action="auth-mode" data-mode="login">ログイン</button>';
-    html += '<button type="button" class="chip-btn'+(authMode==='register'?' is-active':'')+'" data-action="auth-mode" data-mode="register">新規登録</button></div>';
+    html += '<div class="auth-tabs"><button type="button" class="chip-btn'+(authMode==='login'?' is-active':'')+'" data-action="auth-mode" data-mode="login">'+t('auth_tab_login')+'</button>';
+    html += '<button type="button" class="chip-btn'+(authMode==='register'?' is-active':'')+'" data-action="auth-mode" data-mode="register">'+t('auth_tab_register')+'</button></div>';
     if(authError) html += '<div class="notice error">'+escapeHtml(authError)+'</div>';
     if(authSuccess) html += '<div class="notice">'+escapeHtml(authSuccess)+'</div>';
     if(authMode === 'login'){
-      html += '<label class="field"><span>メールアドレス</span><input type="email" id="auth-username" autocomplete="username" /></label>';
-      html += '<label class="field"><span>パスワード</span><input type="password" id="auth-password" autocomplete="current-password" /></label>';
-      html += '<button type="button" class="btn btn-primary" data-action="do-login" '+(authBusy?'disabled':'')+'>'+(authBusy?'処理中…':'ログイン')+'</button>';
-      html += '<button type="button" class="btn-danger-text" data-action="auth-mode" data-mode="forgot" style="align-self:flex-start;">パスワードをお忘れですか？</button>';
+      html += '<label class="field"><span>'+t('auth_email')+'</span><input type="email" id="auth-username" autocomplete="username" /></label>';
+      html += '<label class="field"><span>'+t('auth_password')+'</span><input type="password" id="auth-password" autocomplete="current-password" /></label>';
+      html += '<button type="button" class="btn btn-primary" data-action="do-login" '+(authBusy?'disabled':'')+'>'+(authBusy?t('auth_processing'):t('auth_login_submit'))+'</button>';
+      html += '<button type="button" class="btn-danger-text" data-action="auth-mode" data-mode="forgot" style="align-self:flex-start;">'+t('auth_forgot_password')+'</button>';
     } else if(authMode === 'forgot'){
-      html += '<p class="section-hint">登録済みのメールアドレスを入力してください。パスワード再設定用のリンクをお送りします。</p>';
-      html += '<label class="field"><span>メールアドレス</span><input type="email" id="auth-forgot-email" autocomplete="username" /></label>';
-      html += '<button type="button" class="btn btn-primary" data-action="do-request-reset" '+(authBusy?'disabled':'')+'>'+(authBusy?'送信中…':'再設定用のリンクを送る')+'</button>';
-      html += '<button type="button" class="btn-danger-text" data-action="auth-mode" data-mode="login" style="align-self:flex-start;">ログイン画面に戻る</button>';
+      html += '<p class="section-hint">'+t('auth_forgot_hint')+'</p>';
+      html += '<label class="field"><span>'+t('auth_email')+'</span><input type="email" id="auth-forgot-email" autocomplete="username" /></label>';
+      html += '<button type="button" class="btn btn-primary" data-action="do-request-reset" '+(authBusy?'disabled':'')+'>'+(authBusy?t('auth_sending'):t('auth_send_reset_link'))+'</button>';
+      html += '<button type="button" class="btn-danger-text" data-action="auth-mode" data-mode="login" style="align-self:flex-start;">'+t('auth_back_to_login')+'</button>';
     } else {
-      html += '<label class="field"><span>メールアドレス</span><input type="email" id="auth-username" autocomplete="username" /></label>';
-      html += '<label class="field"><span>表示名</span><input type="text" id="auth-displayname" placeholder="記録に表示される名前" /></label>';
-      html += '<label class="field"><span>パスワード（6文字以上）</span><input type="password" id="auth-password" autocomplete="new-password" /></label>';
-      html += '<label class="field"><span>パスワード（確認）</span><input type="password" id="auth-password2" autocomplete="new-password" /></label>';
+      html += '<label class="field"><span>'+t('auth_email')+'</span><input type="email" id="auth-username" autocomplete="username" /></label>';
+      html += '<label class="field"><span>'+t('auth_display_name')+'</span><input type="text" id="auth-displayname" placeholder="'+escapeHtml(t('auth_display_name_placeholder'))+'" /></label>';
+      html += '<label class="field"><span>'+t('auth_password_min')+'</span><input type="password" id="auth-password" autocomplete="new-password" /></label>';
+      html += '<label class="field"><span>'+t('auth_password_confirm')+'</span><input type="password" id="auth-password2" autocomplete="new-password" /></label>';
       html += '<div id="recaptchaContainer"></div>';
-      if(!RECAPTCHA_SITE_KEY) html += '<p class="section-hint">RECAPTCHA_SITE_KEYが未設定のため、ロボット確認は現在スキップされています。</p>';
-      html += '<button type="button" class="btn btn-primary" data-action="do-register" '+(authBusy?'disabled':'')+'>'+(authBusy?'処理中…':'登録する')+'</button>';
+      if(!RECAPTCHA_SITE_KEY) html += '<p class="section-hint">'+t('auth_recaptcha_missing')+'</p>';
+      html += '<button type="button" class="btn btn-primary" data-action="do-register" '+(authBusy?'disabled':'')+'>'+(authBusy?t('auth_processing'):t('auth_register_submit'))+'</button>';
     }
     html += '</div>';
     return html;
@@ -727,7 +1032,7 @@
   async function doLogin(){
     var username = document.getElementById('auth-username').value.trim();
     var password = document.getElementById('auth-password').value;
-    if(!username || !password){ authError='メールアドレスとパスワードを入力してください。'; renderApp(); return; }
+    if(!username || !password){ authError=t('err_login_required'); renderApp(); return; }
     authBusy = true; authError=''; authSuccess=''; renderApp();
     try{
       var data = await apiCall('login', {username:username, password:password});
@@ -736,7 +1041,7 @@
       renderApp();
       refreshData(false);
     }catch(e){
-      authBusy = false; authError = e.message; renderApp();
+      authBusy = false; authError = serverMsg(e.message); renderApp();
     }
   }
   async function doRegister(){
@@ -744,12 +1049,12 @@
     var displayName = document.getElementById('auth-displayname').value.trim();
     var password = document.getElementById('auth-password').value;
     var password2 = document.getElementById('auth-password2').value;
-    if(!username || !password){ authError='メールアドレスとパスワードを入力してください。'; renderApp(); return; }
-    if(!EMAIL_RE.test(username)){ authError='メールアドレスの形式で入力してください。'; renderApp(); return; }
-    if(password.length < 6){ authError='パスワードは6文字以上にしてください。'; renderApp(); return; }
-    if(password !== password2){ authError='パスワードが一致しません。'; renderApp(); return; }
+    if(!username || !password){ authError=t('err_login_required'); renderApp(); return; }
+    if(!EMAIL_RE.test(username)){ authError=t('err_email_format'); renderApp(); return; }
+    if(password.length < 6){ authError=t('err_password_min'); renderApp(); return; }
+    if(password !== password2){ authError=t('err_password_mismatch'); renderApp(); return; }
     var token = (window.grecaptcha && recaptchaWidgetId!==null) ? grecaptcha.getResponse(recaptchaWidgetId) : '';
-    if(RECAPTCHA_SITE_KEY && !token){ authError='「ロボットではありません」にチェックを入れてください。'; renderApp(); return; }
+    if(RECAPTCHA_SITE_KEY && !token){ authError=t('err_recaptcha_required'); renderApp(); return; }
     authBusy = true; authError=''; authSuccess=''; renderApp();
     try{
       var data = await apiCall('register', {username:username, password:password, displayName:displayName, recaptchaToken:token});
@@ -758,7 +1063,7 @@
       renderApp();
       refreshData(false);
     }catch(e){
-      authBusy = false; authError = e.message;
+      authBusy = false; authError = serverMsg(e.message);
       if(window.grecaptcha && recaptchaWidgetId!==null) grecaptcha.reset(recaptchaWidgetId);
       renderApp();
     }
@@ -766,23 +1071,23 @@
   async function doRequestPasswordReset(){
     var emailEl = document.getElementById('auth-forgot-email');
     var email = emailEl ? emailEl.value.trim() : '';
-    if(!email){ authError='メールアドレスを入力してください。'; renderApp(); return; }
+    if(!email){ authError=t('err_email_required'); renderApp(); return; }
     authBusy = true; authError=''; authSuccess=''; renderApp();
     try{
       await apiCall('requestPasswordReset', {email:email});
       authBusy = false;
-      authSuccess = '入力されたメールアドレス宛にパスワード再設定用のリンクを送信しました（該当するアカウントが無い場合はメールは届きません）。メールをご確認ください。';
+      authSuccess = t('msg_reset_email_sent');
       renderApp();
     }catch(e){
-      authBusy = false; authError = e.message; renderApp();
+      authBusy = false; authError = serverMsg(e.message); renderApp();
     }
   }
   async function doResetPassword(){
     var pw = document.getElementById('auth-newpassword').value;
     var pw2 = document.getElementById('auth-newpassword2').value;
-    if(!pw || !pw2){ authError='新しいパスワードを入力してください。'; renderApp(); return; }
-    if(pw.length < 6){ authError='パスワードは6文字以上にしてください。'; renderApp(); return; }
-    if(pw !== pw2){ authError='パスワードが一致しません。'; renderApp(); return; }
+    if(!pw || !pw2){ authError=t('err_new_password_required'); renderApp(); return; }
+    if(pw.length < 6){ authError=t('err_password_min'); renderApp(); return; }
+    if(pw !== pw2){ authError=t('err_password_mismatch'); renderApp(); return; }
     authBusy = true; authError=''; authSuccess=''; renderApp();
     try{
       await apiCall('resetPassword', {token:resetToken, newPassword:pw});
@@ -794,10 +1099,10 @@
         window.history.replaceState({}, '', url.toString());
       }catch(e){}
       authMode = 'login';
-      authSuccess = 'パスワードを再設定しました。新しいパスワードでログインしてください。';
+      authSuccess = t('msg_password_reset_done');
       renderApp();
     }catch(e){
-      authBusy = false; authError = e.message; renderApp();
+      authBusy = false; authError = serverMsg(e.message); renderApp();
     }
   }
   function doLogout(){
@@ -811,7 +1116,7 @@
   function updateUserBar(){
     var el = document.getElementById('userBar');
     if(!el) return;
-    el.innerHTML = session ? ('<span>ようこそ、<b>'+escapeHtml(session.displayName)+'</b>さん</span><button type="button" class="btn btn-secondary" data-action="logout">ログアウト</button>') : '';
+    el.innerHTML = session ? ('<span>'+t('welcome',{name:escapeHtml(session.displayName)})+'</span><button type="button" class="btn btn-secondary" data-action="logout">'+t('logout')+'</button>') : '';
   }
 
   async function refreshData(silent){
@@ -833,16 +1138,16 @@
       renderApp();
     }catch(e){
       console.error(e);
-      if(!silent){ formError = '記録の読み込みに失敗しました: '+e.message; renderView(); }
+      if(!silent){ formError = t('err_load_failed',{msg:serverMsg(e.message)}); renderView(); }
       updateSyncNote(true);
     }
   }
   function updateSyncNote(failed){
     var el = document.getElementById('syncNote');
     if(!el) return;
-    if(!API_URL){ el.textContent = 'API_URL未設定'; return; }
-    if(failed){ el.textContent = '同期エラー'; return; }
-    el.textContent = lastSyncAt ? ('最終更新 '+lastSyncAt.toLocaleTimeString('ja-JP')) : '';
+    if(!API_URL){ el.textContent = t('sync_note_unset'); return; }
+    if(failed){ el.textContent = t('sync_note_error'); return; }
+    el.textContent = lastSyncAt ? t('sync_note_updated',{time:lastSyncAt.toLocaleTimeString(lang==='en'?'en-US':'ja-JP')}) : '';
   }
 
   /* ---------- generic form dialog ---------- */
@@ -868,7 +1173,7 @@
         '<div class="modal-head"><h3>'+escapeHtml(opts.title||'')+'</h3><button class="icon-btn" data-x>&times;</button></div>'+
         '<form class="form-body">'+ fieldsHtml +
           '<div class="modal-foot">'+
-            (opts.readonly ? '<button type="button" class="btn btn-secondary" data-close>閉じる</button>' : '<button type="submit" class="btn btn-primary">保存</button>')+
+            (opts.readonly ? '<button type="button" class="btn btn-secondary" data-close>'+t('dialog_close')+'</button>' : '<button type="submit" class="btn btn-primary">'+t('dialog_save')+'</button>')+
           '</div>'+
         '</form>'+
       '</div>';
@@ -907,9 +1212,9 @@
     document.body.appendChild(ov);
 
     function modeHint(){
-      if(mode === 'pin') return '写真の中をクリックして「部分」を登録します。既存のピンをクリックすると編集できます。';
-      if(mode === 'relation') return relFirstId ? 'もう一方の部分（ピン）をクリックして関係を作成します。' : '関係の起点となる部分（ピン）をクリックしてください。';
-      return 'ピンをクリックすると、その部分の名称と意味を確認できます。';
+      if(mode === 'pin') return t('annotate_hint_pin');
+      if(mode === 'relation') return relFirstId ? t('annotate_hint_relation_second') : t('annotate_hint_relation_first');
+      return t('annotate_hint_view');
     }
 
     function pinMarkerHtml(p){
@@ -928,12 +1233,12 @@
     function render(){
       ov.innerHTML =
         '<div class="modal">'+
-          '<div class="modal-head"><h3>'+escapeHtml(cfg.label)+'の注釈</h3><button class="icon-btn" data-x>&times;</button></div>'+
+          '<div class="modal-head"><h3>'+t('annotate_title',{label:escapeHtml(cfg.label)})+'</h3><button class="icon-btn" data-x>&times;</button></div>'+
           (editable ?
             '<div class="annotate-toolbar">'+
-              '<button type="button" class="chip-btn'+(mode==='pin'?' is-active':'')+'" data-mode="pin">部分を追加</button>'+
-              '<button type="button" class="chip-btn'+(mode==='relation'?' is-active':'')+'" data-mode="relation">関係を追加</button>'+
-              '<button type="button" class="chip-btn'+(mode==='view'?' is-active':'')+'" data-mode="view">選択解除</button>'+
+              '<button type="button" class="chip-btn'+(mode==='pin'?' is-active':'')+'" data-mode="pin">'+t('annotate_add_pin')+'</button>'+
+              '<button type="button" class="chip-btn'+(mode==='relation'?' is-active':'')+'" data-mode="relation">'+t('annotate_add_relation')+'</button>'+
+              '<button type="button" class="chip-btn'+(mode==='view'?' is-active':'')+'" data-mode="view">'+t('annotate_deselect')+'</button>'+
             '</div><p class="hint">'+modeHint()+'</p>' : '<p class="hint">'+modeHint()+'</p>') +
           '<div class="photo-stage" data-stage>'+
             '<img src="'+cfg.imgSrc+'" alt="'+escapeHtml(cfg.label)+'" draggable="false" />'+
@@ -941,20 +1246,20 @@
             '<svg class="arrow-layer" viewBox="0 0 100 100" preserveAspectRatio="none">'+svgHtml()+'</svg>'+
           '</div>'+
           '<div class="annotate-lists">'+
-            '<div><h4>部分 ('+localPins.length+')</h4><ul class="rec-list">'+
+            '<div><h4>'+t('annotate_parts_heading',{n:localPins.length})+'</h4><ul class="rec-list">'+
               (localPins.length ? localPins.map(function(p){
-                return '<li><b>'+escapeHtml(p.name)+'</b><span>'+escapeHtml(p.meaning)+'</span>'+(editable?'<button data-del-pin="'+p.id+'" class="btn-danger-text">削除</button>':'')+'</li>';
-              }).join('') : '<li class="empty">まだありません</li>')+
+                return '<li><b>'+escapeHtml(p.name)+'</b><span>'+escapeHtml(p.meaning)+'</span>'+(editable?'<button data-del-pin="'+p.id+'" class="btn-danger-text">'+t('annotate_delete')+'</button>':'')+'</li>';
+              }).join('') : '<li class="empty">'+t('annotate_empty')+'</li>')+
             '</ul></div>'+
-            '<div><h4>関係 ('+localRelations.length+')</h4><ul class="rec-list">'+
+            '<div><h4>'+t('annotate_relations_heading',{n:localRelations.length})+'</h4><ul class="rec-list">'+
               (localRelations.length ? localRelations.map(function(r){
                 var a = localPins.filter(function(p){return p.id===r.fromPinId;})[0];
                 var b = localPins.filter(function(p){return p.id===r.toPinId;})[0];
-                return '<li><b>'+escapeHtml(a?a.name:'?')+' → '+escapeHtml(b?b.name:'?')+'</b><span>'+escapeHtml(r.meaning)+'</span>'+(editable?'<button data-del-rel="'+r.id+'" class="btn-danger-text">削除</button>':'')+'</li>';
-              }).join('') : '<li class="empty">まだありません</li>')+
+                return '<li><b>'+escapeHtml(a?a.name:'?')+' → '+escapeHtml(b?b.name:'?')+'</b><span>'+escapeHtml(r.meaning)+'</span>'+(editable?'<button data-del-rel="'+r.id+'" class="btn-danger-text">'+t('annotate_delete')+'</button>':'')+'</li>';
+              }).join('') : '<li class="empty">'+t('annotate_empty')+'</li>')+
             '</ul></div>'+
           '</div>'+
-          '<div class="modal-foot"><button type="button" class="btn btn-primary" data-done>完了</button></div>'+
+          '<div class="modal-foot"><button type="button" class="btn btn-primary" data-done>'+t('annotate_done')+'</button></div>'+
         '</div>';
       wire();
     }
@@ -989,13 +1294,13 @@
         Array.prototype.forEach.call(ov.querySelectorAll('.pin-marker'), function(btn){
           btn.onclick = function(){
             var p = localPins.filter(function(pp){ return pp.id === btn.getAttribute('data-pin-id'); })[0];
-            if(p) openFormDialog({title:p.name, readonly:true, fields:[{key:'meaning', label:'意味するもの', type:'textarea', value:p.meaning}]});
+            if(p) openFormDialog({title:p.name, readonly:true, fields:[{key:'meaning', label:t('field_meaning'), type:'textarea', value:p.meaning}]});
           };
         });
         Array.prototype.forEach.call(ov.querySelectorAll('.rel-line'), function(line){
           line.onclick = function(){
             var r = localRelations.filter(function(rr){ return rr.id === line.getAttribute('data-rel-id'); })[0];
-            if(r) openFormDialog({title:'関係', readonly:true, fields:[{key:'meaning', label:'その矢印が意味するもの', type:'textarea', value:r.meaning}]});
+            if(r) openFormDialog({title:t('dialog_relation_title'), readonly:true, fields:[{key:'meaning', label:t('field_relation_meaning'), type:'textarea', value:r.meaning}]});
           };
         });
       }
@@ -1007,8 +1312,8 @@
         if(markerBtn){
           var p = localPins.filter(function(pp){ return pp.id === markerBtn.getAttribute('data-pin-id'); })[0];
           if(p) openFormDialog({
-            title:'部分を編集',
-            fields:[{key:'name', label:'どのブロック・表現を指している？', value:p.name},{key:'meaning', label:'その部分の意味するもの', type:'textarea', value:p.meaning}],
+            title:t('dialog_edit_part'),
+            fields:[{key:'name', label:t('field_part_name'), value:p.name},{key:'meaning', label:t('field_part_meaning'), type:'textarea', value:p.meaning}],
             onSubmit:function(vals){ if(!vals.name.trim()) return; p.name=vals.name.trim(); p.meaning=vals.meaning.trim(); commit(); render(); }
           });
         } else {
@@ -1016,8 +1321,8 @@
           var x = Math.min(100, Math.max(0, (e.clientX-rect.left)/rect.width*100));
           var y = Math.min(100, Math.max(0, (e.clientY-rect.top)/rect.height*100));
           openFormDialog({
-            title:'部分の意味を記録する',
-            fields:[{key:'name', label:'どのブロック・表現を指している？'},{key:'meaning', label:'その部分の意味するもの', type:'textarea'}],
+            title:t('dialog_new_part'),
+            fields:[{key:'name', label:t('field_part_name')},{key:'meaning', label:t('field_part_meaning'), type:'textarea'}],
             onSubmit:function(vals){ if(!vals.name.trim()) return; localPins.push({id:uid(), x:x, y:y, name:vals.name.trim(), meaning:vals.meaning.trim()}); commit(); render(); }
           });
         }
@@ -1030,8 +1335,8 @@
           var fromId = relFirstId, toId = id;
           relFirstId = null;
           openFormDialog({
-            title:'関係を登録',
-            fields:[{key:'meaning', label:'その矢印が意味するもの', type:'textarea'}],
+            title:t('dialog_new_relation'),
+            fields:[{key:'meaning', label:t('field_relation_meaning'), type:'textarea'}],
             onSubmit:function(vals){ localRelations.push({id:uid(), fromPinId:fromId, toPinId:toId, meaning:vals.meaning.trim()}); commit(); render(); }
           });
           render();
@@ -1048,7 +1353,7 @@
       var p = draft.photos[slotKey];
       if(!p) return;
       var fixedSlot = SLOTS.filter(function(s){ return s.key===slotKey; })[0];
-      var label = p.label || (fixedSlot && fixedSlot.label) || '写真';
+      var label = p.label || (fixedSlot && fixedSlotLabel(fixedSlot.key)) || t('photo_fallback_label');
       openAnnotateModal({
         slot:slotKey, label:label, imgSrc:p.previewUrl, pins:p.pins, relations:p.relations, editable:true,
         onChange:function(pins, relations){ p.pins = pins; p.relations = relations; },
@@ -1073,16 +1378,16 @@
     var action = actionsList.filter(function(a){ return a.id===actionId; })[0];
     if(!action) return;
     openFormDialog({
-      title:'アクションチェック ('+CHECK_LABELS[key]+')',
+      title:t('check_form_title',{label:checkLabel(key)}),
       fields:[
-        {key:'score', label:'実施できましたか（5点満点）', type:'select', options:[1,2,3,4,5], value:3},
-        {key:'comment', label:'感想', type:'textarea'},
-        {key:'stop', label:'今後はアクションチェックをしない', type:'checkbox'}
+        {key:'score', label:t('check_score_label'), type:'select', options:[1,2,3,4,5], value:3},
+        {key:'comment', label:t('check_comment_label'), type:'textarea'},
+        {key:'stop', label:t('check_stop_label'), type:'checkbox'}
       ],
       onSubmit:function(vals){
         apiCall('recordActionCheck', {id:actionId, key:key, score:Number(vals.score), comment:vals.comment.trim(), stop:!!vals.stop})
           .then(function(){ return refreshData(true); })
-          .catch(function(e){ console.error(e); formError='チェックの保存に失敗しました。'; renderView(); });
+          .catch(function(e){ console.error(e); formError=t('err_check_save_failed'); renderView(); });
       }
     });
   }
@@ -1091,17 +1396,17 @@
   function renderNav(){
     var due = computeDueCount();
     var tabs = [
-      {key:'list', label:'記録一覧'},
-      {key:'new', label:'新規記録'},
-      {key:'theme', label:'お題モード'},
-      {key:'checks', label:'アクションチェック', badge:due},
-      {key:'medals', label:'特別な記録', badge: medalsEarned.length || null}
+      {key:'list', label:t('nav_list')},
+      {key:'new', label:t('nav_new')},
+      {key:'theme', label:t('nav_theme')},
+      {key:'checks', label:t('nav_checks'), badge:due},
+      {key:'medals', label:t('nav_medals'), badge: medalsEarned.length || null}
     ];
-    document.getElementById('tabs').innerHTML = tabs.map(function(t){
-      return '<button data-action="nav" data-view="'+t.key+'" class="'+(currentView===t.key?'is-active':'')+'">'+t.label+(t.badge ? '<span class="badge">'+t.badge+'</span>' : '')+'</button>';
+    document.getElementById('tabs').innerHTML = tabs.map(function(tab){
+      return '<button data-action="nav" data-view="'+tab.key+'" class="'+(currentView===tab.key?'is-active':'')+'">'+tab.label+(tab.badge ? '<span class="badge">'+tab.badge+'</span>' : '')+'</button>';
     }).join('');
     var notice = document.getElementById('globalNotice');
-    if(notice) notice.innerHTML = API_URL ? '' : '<div class="notice">API_URLが未設定です。「セットアップ手順.md」に沿ってApps ScriptウェブアプリのURLをこのページ(index.html)先頭のAPI_URLに設定してください。</div>';
+    if(notice) notice.innerHTML = API_URL ? '' : '<div class="notice">'+t('notice_api_url_missing')+'</div>';
     updateSyncNote(false);
   }
 
@@ -1109,22 +1414,22 @@
   function viewThemeHtml(){
     var html = '<div class="stack">';
     html += '<div class="card panel stack">';
-    html += '<h2 class="section-title">お題モード</h2>';
-    html += '<p class="section-hint">ランダムなお題を引いて、そのお題に沿ってモデルを作り、写真で記録していくモードです。</p>';
+    html += '<h2 class="section-title">'+t('theme_title')+'</h2>';
+    html += '<p class="section-hint">'+t('theme_hint')+'</p>';
     if(currentTheme){
-      html += '<div class="notice"><div style="font-size:12px; color:var(--text-muted); margin-bottom:4px;">今回のお題</div><div style="font-size:18px; font-weight:700;">'+escapeHtml(currentTheme)+'</div></div>';
+      html += '<div class="notice"><div style="font-size:12px; color:var(--text-muted); margin-bottom:4px;">'+t('theme_current_label')+'</div><div style="font-size:18px; font-weight:700;">'+escapeHtml(currentTheme)+'</div></div>';
       html += '<div class="row">';
-      html += '<button type="button" class="btn btn-primary" data-action="theme-start-record">このお題でモデルを記録する</button>';
-      html += '<button type="button" class="btn btn-secondary" data-action="theme-draw">お題を引き直す</button>';
+      html += '<button type="button" class="btn btn-primary" data-action="theme-start-record">'+t('theme_start_record')+'</button>';
+      html += '<button type="button" class="btn btn-secondary" data-action="theme-draw">'+t('theme_redraw')+'</button>';
       html += '</div>';
     } else {
-      html += '<button type="button" class="btn btn-primary" data-action="theme-draw" style="align-self:flex-start;">お題を引く</button>';
+      html += '<button type="button" class="btn btn-primary" data-action="theme-draw" style="align-self:flex-start;">'+t('theme_draw')+'</button>';
     }
     html += '</div>';
 
     var themeModels = modelsList.filter(function(m){ return !!m.theme; }).sort(function(a,b){ return a.date < b.date ? 1 : -1; });
-    html += '<div><div class="section-title">これまでのお題モードの記録</div>';
-    if(themeModels.length===0){ html += '<div class="card panel empty-state">まだお題モードの記録はありません。</div>'; }
+    html += '<div><div class="section-title">'+t('theme_past_records')+'</div>';
+    if(themeModels.length===0){ html += '<div class="card panel empty-state">'+t('theme_no_records')+'</div>'; }
     else { html += themeModels.map(modelCardHtml).join(''); }
     html += '</div>';
 
@@ -1139,32 +1444,32 @@
      制御に過ぎない。実際の操作可否はCode.gs側のrequireAdminで必ず検証している。 */
   function themeAdminHtml(){
     var html = '<div class="card panel stack">';
-    html += '<h3 class="section-title">お題を管理する（管理者のみ）</h3>';
-    html += '<p class="section-hint">ここで追加・編集・削除したお題が、全員の「お題を引く」に反映されます。</p>';
+    html += '<h3 class="section-title">'+t('theme_admin_title')+'</h3>';
+    html += '<p class="section-hint">'+t('theme_admin_hint')+'</p>';
     if(themeAdminError) html += '<div class="notice error">'+escapeHtml(themeAdminError)+'</div>';
     html += '<div class="stack">';
-    if(themesList.length===0){ html += '<p class="section-hint">お題が登録されていません。</p>'; }
-    themesList.forEach(function(t){
-      if(editingThemeId === t.id){
+    if(themesList.length===0){ html += '<p class="section-hint">'+t('theme_admin_empty')+'</p>'; }
+    themesList.forEach(function(th){
+      if(editingThemeId === th.id){
         html += '<div class="row" style="align-items:center;">'+
-          '<input type="text" id="theme-edit-input" value="'+escapeHtml(t.text)+'" style="flex:1;" />'+
-          '<button type="button" class="btn btn-primary" data-action="theme-save-edit" data-id="'+t.id+'" '+(themeAdminBusy?'disabled':'')+'>保存</button>'+
-          '<button type="button" class="btn btn-secondary" data-action="theme-cancel-edit" '+(themeAdminBusy?'disabled':'')+'>キャンセル</button>'+
+          '<input type="text" id="theme-edit-input" value="'+escapeHtml(th.text)+'" style="flex:1;" />'+
+          '<button type="button" class="btn btn-primary" data-action="theme-save-edit" data-id="'+th.id+'" '+(themeAdminBusy?'disabled':'')+'>'+t('theme_save')+'</button>'+
+          '<button type="button" class="btn btn-secondary" data-action="theme-cancel-edit" '+(themeAdminBusy?'disabled':'')+'>'+t('theme_cancel')+'</button>'+
         '</div>';
       } else {
         html += '<div class="row" style="justify-content:space-between; align-items:center;">'+
-          '<span>'+escapeHtml(t.text)+'</span>'+
+          '<span>'+escapeHtml(th.text)+'</span>'+
           '<span class="row">'+
-            '<button type="button" class="btn btn-secondary" data-action="theme-edit-start" data-id="'+t.id+'">編集</button>'+
-            '<button type="button" class="btn-danger-text" data-action="theme-delete" data-id="'+t.id+'">削除</button>'+
+            '<button type="button" class="btn btn-secondary" data-action="theme-edit-start" data-id="'+th.id+'">'+t('theme_edit')+'</button>'+
+            '<button type="button" class="btn-danger-text" data-action="theme-delete" data-id="'+th.id+'">'+t('theme_delete')+'</button>'+
           '</span>'+
         '</div>';
       }
     });
     html += '</div>';
     html += '<div class="row" style="align-items:center;">'+
-      '<input type="text" id="theme-new-input" placeholder="新しいお題を入力（例：理想の休日を表すモデル）" style="flex:1;" />'+
-      '<button type="button" class="btn btn-primary" data-action="theme-add" '+(themeAdminBusy?'disabled':'')+'>追加する</button>'+
+      '<input type="text" id="theme-new-input" placeholder="'+escapeHtml(t('theme_new_placeholder'))+'" style="flex:1;" />'+
+      '<button type="button" class="btn btn-primary" data-action="theme-add" '+(themeAdminBusy?'disabled':'')+'>'+t('theme_add')+'</button>'+
     '</div>';
     html += '</div>';
     return html;
@@ -1229,16 +1534,16 @@
   /** 記録期間の長さに応じて、日付ラベルの粒度(日/月/年)を切り替える。 */
   function formatChartDate(dateStr, spanDays){
     var parts = dateStr.split('-');
-    var y = parts[0], mo = parts[1], d = parts[2];
-    if(spanDays > 730) return y+'年';
-    if(spanDays > 45) return y+'/'+mo;
-    return mo+'/'+d;
+    var y = parts[0], mo = Number(parts[1]), d = parts[2];
+    if(spanDays > 730) return lang==='en' ? y : (y+'年');
+    if(spanDays > 45) return lang==='en' ? (EN_MONTHS[mo-1].slice(0,3)+' '+y) : (y+'/'+parts[1]);
+    return parts[1]+'/'+d;
   }
   function medalChartHtml(){
     var points = buildCumulativeSeries();
     if(points.length === 0){
-      return '<div class="card panel medal-chart-card"><h2 class="section-title">登録数の推移</h2>'+
-        '<div class="medal-chart-empty">記録を始めると、ここに登録数の推移グラフが表示されます。</div></div>';
+      return '<div class="card panel medal-chart-card"><h2 class="section-title">'+t('medal_chart_title')+'</h2>'+
+        '<div class="medal-chart-empty">'+t('medal_chart_empty')+'</div></div>';
     }
     var W = 640, H = 220, padL = 40, padR = 14, padT = 14, padB = 24;
     var plotW = W - padL - padR, plotH = H - padT - padB;
@@ -1260,8 +1565,8 @@
     var xTicks = [];
     for(var i = 0; i < xTickCount; i++){
       var frac = xTickCount === 1 ? 0 : i / (xTickCount - 1);
-      var t = minT + frac * (maxT - minT);
-      xTicks.push(new Date(t));
+      var tMs = minT + frac * (maxT - minT);
+      xTicks.push(new Date(tMs));
     }
     var gridSvg = yAxis.ticks.map(function(v){
       var y = yOf(v);
@@ -1282,7 +1587,7 @@
     }).join('');
     var dataAttr = escapeHtml(JSON.stringify(points));
     var svg = '<svg class="medal-chart-svg" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet" role="img" '+
-      'aria-label="'+escapeHtml('これまでに合計'+yMax+'個のモデルを記録した、日付ごとの累積登録数の推移グラフ')+'" data-points="'+dataAttr+'" '+
+      'aria-label="'+escapeHtml(t('medal_chart_aria',{n:yMax}))+'" data-points="'+dataAttr+'" '+
       'data-padl="'+padL+'" data-padr="'+padR+'" data-plotw="'+plotW+'" data-mint="'+minT+'" data-maxt="'+maxT+'" data-ymax="'+yAxis.max+'" data-padt="'+padT+'" data-ploth="'+plotH+'">'+
       gridSvg + xAxisSvg +
       '<polygon class="medal-chart-area" points="'+areaPts.join(' ')+'" />'+
@@ -1293,8 +1598,8 @@
       '<rect class="medal-chart-hitrect" x="'+padL+'" y="'+padT+'" width="'+plotW+'" height="'+plotH+'" />'+
     '</svg>';
     return '<div class="card panel medal-chart-card stack">'+
-      '<div class="medal-chart-head"><h2 class="section-title" style="margin:0;">登録数の推移</h2>'+
-      '<span class="medal-chart-total">横軸: 記録日　縦軸: 累積個数（現在 <b>'+yMax+'</b> 個）</span></div>'+
+      '<div class="medal-chart-head"><h2 class="section-title" style="margin:0;">'+t('medal_chart_title')+'</h2>'+
+      '<span class="medal-chart-total">'+t('medal_chart_axis_hint',{n:yMax})+'</span></div>'+
       '<div class="medal-chart-wrap">'+svg+'<div class="medal-chart-tooltip"></div></div>'+
     '</div>';
   }
@@ -1319,11 +1624,11 @@
       return padL + frac * plotW;
     }
     function nearestPoint(pxFrac){
-      var t = minT + pxFrac * (maxT - minT);
+      var tMs = minT + pxFrac * (maxT - minT);
       var best = points[0], bestDiff = Infinity;
       points.forEach(function(p){
         var pt = new Date(p.date+'T00:00:00').getTime();
-        var diff = Math.abs(pt - t);
+        var diff = Math.abs(pt - tMs);
         if(diff < bestDiff){ bestDiff = diff; best = p; }
       });
       return best;
@@ -1354,7 +1659,7 @@
       var tipTop = (yPix / svg.viewBox.baseVal.height) * svgRect.height + (svgRect.top - wrapRect.top);
       tooltip.style.left = tipLeft + 'px';
       tooltip.style.top = (tipTop - 8) + 'px';
-      tooltip.textContent = p.date + '  ' + p.count + '個';
+      tooltip.textContent = p.date + '  ' + (lang==='en' ? p.count : (p.count+'個'));
       tooltip.style.opacity = 1;
     }
     function hide(){
@@ -1373,19 +1678,19 @@
     var html = '<div class="stack">';
     html += medalChartHtml();
     html += '<div class="card panel stack">';
-    html += '<h2 class="section-title">特別な記録帳</h2>';
-    html += '<p class="section-hint">モデルを登録した数に応じて、記念のメダルが届きます。ぞろ目や記念日の数字には、星の飾りが付きます。</p>';
-    html += '<div class="medal-progress">これまでに <b>'+medalCount+'</b> 個のモデルを記録しました。'+
-      (next ? ('次のメダルまであと <b>'+(next-medalCount)+'</b> 個です。') : 'すべてのメダルを獲得しました。')+
+    html += '<h2 class="section-title">'+t('medal_book_title')+'</h2>';
+    html += '<p class="section-hint">'+t('medal_book_hint')+'</p>';
+    html += '<div class="medal-progress">'+t('medal_progress_recorded',{n:medalCount})+
+      (next ? t('medal_progress_next',{n:(next-medalCount)}) : t('medal_progress_all'))+
     '</div>';
     html += '</div>';
     html += '<div class="card panel"><div class="medal-grid">';
     html += MEDAL_MILESTONES.map(function(n){
       var earned = medalsEarned.filter(function(e){ return e.milestone===n; })[0];
-      var dateLabel = earned ? String(earned.awardedAt||'').slice(0,10) : '未達成';
+      var dateLabel = earned ? String(earned.awardedAt||'').slice(0,10) : t('medal_not_earned');
       return '<div class="medal-card'+(earned?'':' is-locked')+'">'+
         medalBadgeHtml(n, !!earned)+
-        '<div class="medal-label">'+n+'個目</div>'+
+        '<div class="medal-label">'+t('medal_label',{n:n})+'</div>'+
         '<div class="medal-date">'+escapeHtml(dateLabel)+'</div>'+
       '</div>';
     }).join('');
@@ -1402,11 +1707,11 @@
       '<div class="modal small-modal medal-celebration">'+
         '<div class="modal-head" style="justify-content:flex-end;"><button class="icon-btn" data-x>&times;</button></div>'+
         medalBadgeHtml(milestone, true)+
-        '<h3>'+milestone+'個目のメダル獲得！</h3>'+
-        '<p class="section-hint">モデルの記録、おめでとうございます。</p>'+
+        '<h3>'+t('medal_celebration_title',{n:milestone})+'</h3>'+
+        '<p class="section-hint">'+t('medal_celebration_hint')+'</p>'+
         '<div class="modal-foot" style="justify-content:center;">'+
-          '<button type="button" class="btn btn-secondary" data-close>とじる</button>'+
-          '<button type="button" class="btn btn-primary" data-view-medals>特別な記録帳を見る</button>'+
+          '<button type="button" class="btn btn-secondary" data-close>'+t('medal_close')+'</button>'+
+          '<button type="button" class="btn btn-primary" data-view-medals>'+t('medal_view_book')+'</button>'+
         '</div>'+
       '</div>';
     document.body.appendChild(ov);
@@ -1424,8 +1729,8 @@
       return d.getFullYear()===monthYear && d.getMonth()===monthMonth;
     }).sort(function(a,b){ return a.date < b.date ? 1 : -1; });
     var html = '<div class="stack">';
-    html += '<div class="cal-head"><button class="btn" data-action="month-prev">&lsaquo; 前の月</button><span class="cal-title">'+monthYear+'年 '+(monthMonth+1)+'月の記録</span><button class="btn" data-action="month-next">次の月 &rsaquo;</button></div>';
-    if(items.length===0){ html += '<div class="card panel empty-state">この月の記録はまだありません。</div>'; }
+    html += '<div class="cal-head"><button class="btn" data-action="month-prev">'+t('month_prev')+'</button><span class="cal-title">'+escapeHtml(monthTitle(monthYear, monthMonth))+'</span><button class="btn" data-action="month-next">'+t('month_next')+'</button></div>';
+    if(items.length===0){ html += '<div class="card panel empty-state">'+t('month_empty')+'</div>'; }
     else { items.forEach(function(m){ html += modelCardHtml(m); }); }
     html += '</div>';
     return html;
@@ -1436,15 +1741,15 @@
     var thumb = m.coverAssetId ? '<img src="'+blobUrl(m.coverAssetId)+'" alt="" />' : 'no photo';
     return '<div class="card model-card" data-action="open-detail" data-id="'+m.id+'">'+
       '<div class="model-thumb">'+thumb+'</div>'+
-      '<div><h3>'+escapeHtml(m.title)+(m.isPublic===false?' <span class="badge-private">非公開</span>':'')+(m.theme?' <span class="badge-theme">お題</span>':'')+(m.recordMode==='video'?' <span class="badge-video">動画</span>':'')+'</h3>'+
+      '<div><h3>'+escapeHtml(m.title)+(m.isPublic===false?' <span class="badge-private">'+t('badge_private')+'</span>':'')+(m.theme?' <span class="badge-theme">'+t('badge_theme')+'</span>':'')+(m.recordMode==='video'?' <span class="badge-video">'+t('badge_video')+'</span>':'')+'</h3>'+
       '<div class="meta">'+m.date+(m.place?' ・ '+escapeHtml(m.place):'')+'</div>'+
-      '<div class="meta">記録者: '+escapeHtml(m.createdBy||'匿名')+'</div></div>'+
+      '<div class="meta">'+t('recorder_label',{name:escapeHtml(m.createdBy||t('anonymous'))})+'</div></div>'+
     '</div>';
   }
   function viewListHtml(){
     var sorted = modelsList.slice().sort(function(a,b){ return a.date < b.date ? 1 : -1; });
     var html = '<div class="stack">';
-    if(sorted.length===0){ html += '<div class="card panel empty-state">まだ記録がありません。「新規記録」から最初のモデルを登録しましょう。</div>'; }
+    if(sorted.length===0){ html += '<div class="card panel empty-state">'+t('list_empty')+'</div>'; }
     else { sorted.forEach(function(m){ html += modelCardHtml(m); }); }
     html += '</div>';
     return html;
@@ -1454,81 +1759,82 @@
   function slotCardHtml(slot){
     var p = draft.photos[slot.key];
     var hasPhoto = !!(p && p.assetId);
+    var fixedLabel = SLOTS.some(function(s){ return s.key===slot.key; }) ? fixedSlotLabel(slot.key) : '';
     var labelHtml = slot.editableLabel
-      ? '<input type="text" class="slot-label-input" data-slot="'+slot.key+'" value="'+escapeHtml((p&&p.label)||'')+'" placeholder="'+escapeHtml(slot.placeholder||'ラベル')+'" />'
-      : (slot.label ? '<div class="slot-label">'+escapeHtml(slot.label)+'</div>' : '');
+      ? '<input type="text" class="slot-label-input" data-slot="'+slot.key+'" value="'+escapeHtml((p&&p.label)||'')+'" placeholder="'+escapeHtml(slot.placeholder||t('slot_label_placeholder_default'))+'" />'
+      : (fixedLabel ? '<div class="slot-label">'+escapeHtml(fixedLabel)+'</div>' : '');
     if(!hasPhoto){
       return '<div class="slot-card">'+labelHtml+
-        '<button type="button" class="slot-empty-btn" data-action="photo-upload-slot" data-slot="'+slot.key+'">＋ 写真を追加</button>'+
+        '<button type="button" class="slot-empty-btn" data-action="photo-upload-slot" data-slot="'+slot.key+'">'+t('slot_add_photo')+'</button>'+
         '<input type="file" accept="image/*" id="file-'+slot.key+'" style="display:none" />'+
       '</div>';
     }
     return '<div class="slot-card has-photo">'+labelHtml+
-      '<div class="slot-thumb-wrap"><img src="'+p.previewUrl+'" alt="" />'+ (p.pins.length ? '<span class="slot-pin-count">ピン '+p.pins.length+'</span>' : '')+'</div>'+
-      '<div class="slot-actions"><button type="button" class="btn" data-action="annotate-open" data-slot="'+slot.key+'" data-mode="draft">注釈を編集</button>'+
-      '<button type="button" class="btn btn-secondary" data-action="photo-remove" data-slot="'+slot.key+'">削除</button></div>'+
+      '<div class="slot-thumb-wrap"><img src="'+p.previewUrl+'" alt="" />'+ (p.pins.length ? '<span class="slot-pin-count">'+t('slot_pin_count',{n:p.pins.length})+'</span>' : '')+'</div>'+
+      '<div class="slot-actions"><button type="button" class="btn" data-action="annotate-open" data-slot="'+slot.key+'" data-mode="draft">'+t('slot_annotate')+'</button>'+
+      '<button type="button" class="btn btn-secondary" data-action="photo-remove" data-slot="'+slot.key+'">'+t('slot_remove')+'</button></div>'+
     '</div>';
   }
   function viewNewHtml(){
     var html = '<div class="card panel stack">';
-    html += '<h2 class="section-title">新規モデル記録</h2>';
-    if(!API_URL) html += '<div class="notice">API_URLが未設定です。保存するにはindex.html内のAPI_URLにApps ScriptウェブアプリのURLを設定してください。</div>';
+    html += '<h2 class="section-title">'+t('new_record_title')+'</h2>';
+    if(!API_URL) html += '<div class="notice">'+t('notice_api_url_missing_save')+'</div>';
     if(formError) html += '<div class="notice error">'+escapeHtml(formError)+'</div>';
-    if(draft.theme){ html += '<div class="notice">お題モードで記録中です。お題: <strong>'+escapeHtml(draft.theme)+'</strong></div>'; }
+    if(draft.theme){ html += '<div class="notice">'+t('theme_mode_notice',{theme:escapeHtml(draft.theme)})+'</div>'; }
     html += '<div class="field-grid">';
-    html += '<label class="field"><span>タイトル</span><input type="text" id="f-title" value="'+escapeHtml(draft.title)+'" placeholder="例）チームの未来像モデル" /></label>';
-    html += '<label class="field"><span>日付</span><input type="date" id="f-date" value="'+draft.date+'" /></label>';
-    html += '<label class="field"><span>場所・イベント</span><input type="text" id="f-place" value="'+escapeHtml(draft.place)+'" placeholder="例）第3回LSPワークショップ" /></label>';
+    html += '<label class="field"><span>'+t('field_title')+'</span><input type="text" id="f-title" value="'+escapeHtml(draft.title)+'" placeholder="'+escapeHtml(t('field_title_placeholder'))+'" /></label>';
+    html += '<label class="field"><span>'+t('field_date')+'</span><input type="date" id="f-date" value="'+draft.date+'" /></label>';
+    html += '<label class="field"><span>'+t('field_place')+'</span><input type="text" id="f-place" value="'+escapeHtml(draft.place)+'" placeholder="'+escapeHtml(t('field_place_placeholder'))+'" /></label>';
     html += '</div>';
-    html += '<p class="section-hint">記録者: '+escapeHtml(session.displayName)+'</p>';
+    html += '<p class="section-hint">'+t('recorder_prefix',{name:escapeHtml(session.displayName)})+'</p>';
 
-    html += '<label class="field"><span>モデルが示すストーリー（全体の概要）</span><textarea id="f-story" rows="3" placeholder="このモデル全体で表現しているストーリーや世界観を書きます">'+escapeHtml(draft.story)+'</textarea></label>';
+    html += '<label class="field"><span>'+t('field_story')+'</span><textarea id="f-story" rows="3" placeholder="'+escapeHtml(t('field_story_placeholder'))+'">'+escapeHtml(draft.story)+'</textarea></label>';
 
-    html += '<label class="toggle-row"><input type="checkbox" id="f-ispublic" '+(draft.isPublic?'checked':'')+' /> この記録を他の人にも公開する（チェックを外すと自分だけに表示されます）</label>';
+    html += '<label class="toggle-row"><input type="checkbox" id="f-ispublic" '+(draft.isPublic?'checked':'')+' /> '+t('toggle_public')+'</label>';
 
-    html += '<div><div class="section-title">記録の方法</div><div class="section-hint">通常は1枚の写真で十分です。複数の角度や動画で残したいときだけ、下から選んでください。</div>';
-    html += '<div class="row">' + RECORD_MODE_OPTIONS.map(function(o){
-      return '<button type="button" class="chip-btn'+(draft.recordMode===o.key?' is-active':'')+'" data-action="set-record-mode" data-mode="'+o.key+'">'+o.label+'</button>';
+    html += '<div><div class="section-title">'+t('record_method_title')+'</div><div class="section-hint">'+t('record_method_hint')+'</div>';
+    html += '<div class="row">' + RECORD_MODE_OPTIONS.map(function(k){
+      return '<button type="button" class="chip-btn'+(draft.recordMode===k?' is-active':'')+'" data-action="set-record-mode" data-mode="'+k+'">'+recordModeLabel(k)+'</button>';
     }).join('') + '</div></div>';
 
     if(draft.recordMode === 'video'){
-      html += '<div><div class="section-title">動画</div><div class="section-hint">動画は30MBまでアップロードできます。数十秒程度を目安にしてください。動画には、写真のように場所を指定する注釈は付けられません。</div>';
+      html += '<div><div class="section-title">'+t('video_section_title')+'</div><div class="section-hint">'+t('video_section_hint')+'</div>';
       if(draft.video && draft.video.assetId){
         html += '<div class="stack"><video src="'+draft.video.previewUrl+'" controls style="width:100%; max-width:420px; border-radius:var(--radius-m);"></video>'+
-          '<div class="row"><button type="button" class="btn btn-secondary" data-action="video-remove">削除</button></div></div>';
+          '<div class="row"><button type="button" class="btn btn-secondary" data-action="video-remove">'+t('video_remove')+'</button></div></div>';
       } else if(draft.video && draft.video.uploading){
-        html += '<p class="section-hint">アップロード中…</p>';
+        html += '<p class="section-hint">'+t('video_uploading')+'</p>';
       } else {
-        html += '<button type="button" class="btn" data-action="video-upload-slot" style="align-self:flex-start;">＋ 動画を追加</button>'+
+        html += '<button type="button" class="btn" data-action="video-upload-slot" style="align-self:flex-start;">'+t('video_add')+'</button>'+
           '<input type="file" accept="video/*" id="file-video" style="display:none" />';
       }
       html += '</div>';
     } else {
       var modeSlots = slotsForMode(draft.recordMode);
-      var photoTitle = draft.recordMode==='double' ? '写真（2枚まで）' : (draft.recordMode==='cube' ? '写真（最大5方向・立体表示）' : '写真');
-      var photoHint = draft.recordMode==='double' ? 'それぞれの写真に、好きなラベル（例：全体・アップ）を付けられます。'
-        : (draft.recordMode==='cube' ? '正面・右・左・上・背面のうち、撮影した角度だけ登録すれば構いません。' : 'モデル全体が分かる写真を1枚登録します。');
+      var photoTitle = draft.recordMode==='double' ? t('photo_title_double') : (draft.recordMode==='cube' ? t('photo_title_cube') : t('photo_title_single'));
+      var photoHint = draft.recordMode==='double' ? t('photo_hint_double')
+        : (draft.recordMode==='cube' ? t('photo_hint_cube') : t('photo_hint_single'));
       html += '<div><div class="section-title">'+photoTitle+'</div><div class="section-hint">'+photoHint+'</div>';
       html += '<div class="slot-grid">' + modeSlots.map(slotCardHtml).join('') + '</div></div>';
     }
 
-    html += '<label class="field"><span>そのときに気づいたこと</span><textarea id="f-noticed" rows="3" placeholder="モデルを作りながら気づいたことを書き留めます">'+escapeHtml(draft.noticed)+'</textarea></label>';
+    html += '<label class="field"><span>'+t('field_noticed')+'</span><textarea id="f-noticed" rows="3" placeholder="'+escapeHtml(t('field_noticed_placeholder'))+'">'+escapeHtml(draft.noticed)+'</textarea></label>';
 
-    html += '<div><div class="section-title">明日からのアクション</div><div class="section-hint">3日後・1週間後・1ヶ月後・3ヶ月後にチェックを行います。</div>';
+    html += '<div><div class="section-title">'+t('actions_title')+'</div><div class="section-hint">'+t('actions_hint')+'</div>';
     html += '<div class="action-rows" id="actionRows">';
     draft.actions.forEach(function(a, i){
-      html += '<div class="action-row"><input type="text" class="action-row-input" data-idx="'+i+'" value="'+escapeHtml(a)+'" placeholder="例）毎朝チームに一言共有する" />'+
-        (draft.actions.length>1 ? '<button type="button" class="btn btn-secondary" data-action="action-remove-row" data-idx="'+i+'">削除</button>' : '')+
+      html += '<div class="action-row"><input type="text" class="action-row-input" data-idx="'+i+'" value="'+escapeHtml(a)+'" placeholder="'+escapeHtml(t('action_placeholder'))+'" />'+
+        (draft.actions.length>1 ? '<button type="button" class="btn btn-secondary" data-action="action-remove-row" data-idx="'+i+'">'+t('action_remove')+'</button>' : '')+
       '</div>';
     });
-    html += '</div><button type="button" class="btn" data-action="action-add-row" style="margin-top:8px;">＋ アクションを追加</button></div>';
+    html += '</div><button type="button" class="btn" data-action="action-add-row" style="margin-top:8px;">'+t('action_add')+'</button></div>';
 
-    html += '<div class="row" style="justify-content:flex-end;"><button type="button" class="btn btn-primary" data-action="save-new-model" '+(saving?'disabled':'')+'>'+(saving?'保存中…':'この記録を保存')+'</button></div>';
+    html += '<div class="row" style="justify-content:flex-end;"><button type="button" class="btn btn-primary" data-action="save-new-model" '+(saving?'disabled':'')+'>'+(saving?t('saving'):t('save_record'))+'</button></div>';
     html += '</div>';
     return html;
   }
   function afterNewRender(){
-    var t = document.getElementById('f-title'); if(t) t.oninput = function(e){ draft.title = e.target.value; };
+    var titleEl = document.getElementById('f-title'); if(titleEl) titleEl.oninput = function(e){ draft.title = e.target.value; };
     var dt = document.getElementById('f-date'); if(dt) dt.oninput = function(e){ draft.date = e.target.value; };
     var pl = document.getElementById('f-place'); if(pl) pl.oninput = function(e){ draft.place = e.target.value; };
     var nt = document.getElementById('f-noticed'); if(nt) nt.oninput = function(e){ draft.noticed = e.target.value; };
@@ -1556,7 +1862,7 @@
           draft.photos[slot.key] = {assetId:res.id, previewUrl:res.url, pins:[], relations:[], label:existingLabel};
           renderView();
         }).catch(function(err){
-          formError = '写真のアップロードに失敗しました: '+err.message;
+          formError = t('err_photo_upload_failed',{msg:serverMsg(err.message)});
           renderView();
         });
       };
@@ -1567,7 +1873,7 @@
         var file = e.target.files[0];
         if(!file) return;
         if(file.size > VIDEO_MAX_BYTES){
-          formError = '動画は30MBまでアップロードできます。もう少し短い動画をお試しください。';
+          formError = t('err_video_too_large');
           renderView();
           return;
         }
@@ -1582,7 +1888,7 @@
           renderView();
         }).catch(function(err){
           draft.video = null;
-          formError = '動画のアップロードに失敗しました: '+err.message;
+          formError = t('err_video_upload_failed',{msg:serverMsg(err.message)});
           renderView();
         });
       };
@@ -1597,9 +1903,9 @@
     var hasContent = isVideo
       ? !!(draft.video && draft.video.assetId)
       : modeSlots.some(function(s){ return draft.photos[s.key] && draft.photos[s.key].assetId; });
-    if(!title){ formError='タイトルを入力してください。'; renderView(); return; }
-    if(!date){ formError='日付を入力してください。'; renderView(); return; }
-    if(!hasContent){ formError = isVideo ? '動画をアップロードしてください。' : '写真を少なくとも1枚登録してください。'; renderView(); return; }
+    if(!title){ formError=t('err_title_required'); renderView(); return; }
+    if(!date){ formError=t('err_date_required'); renderView(); return; }
+    if(!hasContent){ formError = isVideo ? t('err_video_required') : t('err_photo_required'); renderView(); return; }
     formError=''; saving=true; renderView();
     try{
       var coverAssetId = '';
@@ -1641,7 +1947,7 @@
     }catch(e){
       console.error(e);
       saving = false;
-      formError = '保存に失敗しました: '+e.message;
+      formError = t('err_save_failed',{msg:serverMsg(e.message)});
       renderView();
     }
   }
@@ -1658,7 +1964,7 @@
     }catch(e){
       console.error(e);
       deleteBusy = false;
-      deleteError = '削除に失敗しました: '+e.message;
+      deleteError = t('err_delete_failed',{msg:serverMsg(e.message)});
       renderView();
     }
   }
@@ -1667,7 +1973,7 @@
   async function doAddTheme(){
     var input = document.getElementById('theme-new-input');
     var text = input ? input.value.trim() : '';
-    if(!text){ themeAdminError='お題の内容を入力してください。'; renderView(); return; }
+    if(!text){ themeAdminError=t('err_theme_text_required'); renderView(); return; }
     themeAdminBusy = true; themeAdminError=''; renderView();
     try{
       await apiCall('createTheme', {text:text});
@@ -1676,14 +1982,14 @@
     }catch(e){
       console.error(e);
       themeAdminBusy = false;
-      themeAdminError = '追加に失敗しました: '+e.message;
+      themeAdminError = t('err_theme_add_failed',{msg:serverMsg(e.message)});
       renderView();
     }
   }
   async function doSaveThemeEdit(id){
     var input = document.getElementById('theme-edit-input');
     var text = input ? input.value.trim() : '';
-    if(!text){ themeAdminError='お題の内容を入力してください。'; renderView(); return; }
+    if(!text){ themeAdminError=t('err_theme_text_required'); renderView(); return; }
     themeAdminBusy = true; themeAdminError=''; renderView();
     try{
       await apiCall('updateTheme', {id:id, text:text});
@@ -1692,7 +1998,7 @@
     }catch(e){
       console.error(e);
       themeAdminBusy = false;
-      themeAdminError = '更新に失敗しました: '+e.message;
+      themeAdminError = t('err_theme_update_failed',{msg:serverMsg(e.message)});
       renderView();
     }
   }
@@ -1705,7 +2011,7 @@
     }catch(e){
       console.error(e);
       themeAdminBusy = false;
-      themeAdminError = '削除に失敗しました: '+e.message;
+      themeAdminError = t('err_theme_delete_failed',{msg:serverMsg(e.message)});
       renderView();
     }
   }
@@ -1736,10 +2042,10 @@
     var byKey = {};
     photos.forEach(function(p){ byKey[p.slot] = p; });
     function face(slotKey, cls){
-      var slotDef = SLOTS.filter(function(s){ return s.key===slotKey; })[0];
+      var slotLabel = fixedSlotLabel(slotKey);
       var p = byKey[slotKey];
-      var inner = p ? photoStageInnerHtml(p) : '<div class="cube-face-empty">'+escapeHtml(slotDef.label)+'<br>未撮影</div>';
-      return '<div class="cube-face '+cls+'"><span class="cube-face-label">'+escapeHtml(slotDef.label)+'</span>'+inner+'</div>';
+      var inner = p ? photoStageInnerHtml(p) : '<div class="cube-face-empty">'+escapeHtml(slotLabel)+'<br>'+t('cube_unphotographed')+'</div>';
+      return '<div class="cube-face '+cls+'"><span class="cube-face-label">'+escapeHtml(slotLabel)+'</span>'+inner+'</div>';
     }
     return '<div class="cube-wrap">'+
       '<div class="cube-scene" data-cube>'+
@@ -1747,7 +2053,7 @@
           face('front','face-front')+face('back','face-back')+face('right','face-right')+face('left','face-left')+face('top','face-top')+
         '</div>'+
       '</div>'+
-      '<p class="cube-hint">ドラッグして回転できます（底面は表示されません）</p>'+
+      '<p class="cube-hint">'+t('cube_hint')+'</p>'+
     '</div>';
   }
   /** 1枚・2枚モード用の、立体表示なしのシンプルな写真ギャラリー(各写真に注釈編集ボタン付き)。 */
@@ -1755,7 +2061,7 @@
     return '<div class="photo-gallery">' + photos.map(function(p){
       return '<figure class="photo-block">' + photoStageInnerHtml(p) +
         '<figcaption><span>'+escapeHtml(resolveSlotLabel(p))+'</span>'+
-        '<button type="button" class="btn btn-secondary" data-action="annotate-open" data-slot="'+p.slot+'" data-mode="existing" data-model-id="'+m.id+'">注釈を編集</button>'+
+        '<button type="button" class="btn btn-secondary" data-action="annotate-open" data-slot="'+p.slot+'" data-mode="existing" data-model-id="'+m.id+'">'+t('slot_annotate')+'</button>'+
         '</figcaption></figure>';
     }).join('') + '</div>';
   }
@@ -1766,7 +2072,7 @@
   function viewDetailHtml(){
     var m = modelsList.filter(function(x){ return x.id===currentDetailId; })[0];
     if(!m){
-      return '<div class="card panel empty-state">記録が見つかりません。<br><button class="btn" style="margin-top:10px;" data-action="nav" data-view="list">記録一覧に戻る</button></div>';
+      return '<div class="card panel empty-state">'+t('record_not_found')+'<br><button class="btn" style="margin-top:10px;" data-action="nav" data-view="list">'+t('back_to_list_btn')+'</button></div>';
     }
     var modeSlots = slotsForMode(m.recordMode);
     var photos = modeSlots.map(function(s){ return photosList.filter(function(p){ return p.modelId===m.id && p.slot===s.key; })[0]; }).filter(Boolean);
@@ -1777,55 +2083,54 @@
 
     var html = '<div class="stack">';
     html += '<div class="row" style="justify-content:space-between; align-items:center;">';
-    html += '<button class="btn btn-secondary" data-action="nav" data-view="list" style="align-self:flex-start;">&larr; 一覧へ戻る</button>';
-    html += '<button class="btn btn-secondary" data-action="open-month" data-year="'+monthLinkY+'" data-month="'+monthLinkM+'">'+monthLinkY+'年'+(monthLinkM+1)+'月の記録一覧</button>';
+    html += '<button class="btn btn-secondary" data-action="nav" data-view="list" style="align-self:flex-start;">'+t('back_to_list')+'</button>';
+    html += '<button class="btn btn-secondary" data-action="open-month" data-year="'+monthLinkY+'" data-month="'+monthLinkM+'">'+escapeHtml(monthLinkLabel(monthLinkY, monthLinkM))+'</button>';
     html += '</div>';
     html += '<div class="card panel stack">';
-    html += '<div><h2 class="section-title" style="font-size:20px;">'+escapeHtml(m.title)+(m.isPublic===false?' <span class="badge-private">非公開</span>':'')+'</h2>';
-    html += '<div class="detail-meta"><span>'+m.date+'</span>'+(m.place?'<span>'+escapeHtml(m.place)+'</span>':'')+'<span>記録者: '+escapeHtml(m.createdBy||'匿名')+'</span></div>';
-    if(m.isPublic===false){ html += '<p class="section-hint">この記録は非公開に設定されています。あなた以外には表示されません。</p>'; }
+    html += '<div><h2 class="section-title" style="font-size:20px;">'+escapeHtml(m.title)+(m.isPublic===false?' <span class="badge-private">'+t('badge_private')+'</span>':'')+'</h2>';
+    html += '<div class="detail-meta"><span>'+m.date+'</span>'+(m.place?'<span>'+escapeHtml(m.place)+'</span>':'')+'<span>'+t('recorder_label',{name:escapeHtml(m.createdBy||t('anonymous'))})+'</span></div>';
+    if(m.isPublic===false){ html += '<p class="section-hint">'+t('public_badge_hint')+'</p>'; }
     html += '</div>';
 
-    if(m.theme){ html += '<div class="notice">お題モードの記録です。お題: <strong>'+escapeHtml(m.theme)+'</strong></div>'; }
+    if(m.theme){ html += '<div class="notice">'+t('theme_record_notice',{theme:escapeHtml(m.theme)})+'</div>'; }
 
     if(m.recordMode !== 'video'){
-      html += '<label class="toggle-row"><input type="checkbox" id="pinToggle" '+(pinsVisible?'checked':'')+' /> ピン・関係の表示</label>';
+      html += '<label class="toggle-row"><input type="checkbox" id="pinToggle" '+(pinsVisible?'checked':'')+' /> '+t('pin_toggle_label')+'</label>';
     }
 
     if(m.recordMode === 'video'){
-      html += m.videoAssetId ? videoEmbedHtml(m.videoAssetId) : '<p class="section-hint">動画が登録されていません。</p>';
+      html += m.videoAssetId ? videoEmbedHtml(m.videoAssetId) : '<p class="section-hint">'+t('no_video_registered')+'</p>';
     } else if(m.recordMode === 'cube'){
-      html += photos.length ? cubeHtml(m, photos) : '<p class="section-hint">写真が登録されていません。</p>';
+      html += photos.length ? cubeHtml(m, photos) : '<p class="section-hint">'+t('no_photo_registered')+'</p>';
       if(photos.length){
         html += '<div class="slot-strip">' + photos.map(function(p){
-          var slotDef = SLOTS.filter(function(s){ return s.key===p.slot; })[0];
-          return '<div class="slot-strip-item"><img src="'+blobUrl(p.assetId)+'" alt="" /><span>'+escapeHtml(slotDef.label)+'</span>'+
-            '<button class="btn btn-secondary" data-action="annotate-open" data-slot="'+p.slot+'" data-mode="existing" data-model-id="'+m.id+'">注釈を編集</button>'+
+          return '<div class="slot-strip-item"><img src="'+blobUrl(p.assetId)+'" alt="" /><span>'+escapeHtml(fixedSlotLabel(p.slot))+'</span>'+
+            '<button class="btn btn-secondary" data-action="annotate-open" data-slot="'+p.slot+'" data-mode="existing" data-model-id="'+m.id+'">'+t('slot_annotate')+'</button>'+
           '</div>';
         }).join('') + '</div>';
       }
     } else {
-      html += photos.length ? photoGalleryHtml(m, photos) : '<p class="section-hint">写真が登録されていません。</p>';
+      html += photos.length ? photoGalleryHtml(m, photos) : '<p class="section-hint">'+t('no_photo_registered')+'</p>';
     }
 
-    if(m.story){ html += '<div><div class="section-title">モデルが示すストーリー(全体の概要)</div><p>'+escapeHtml(m.story).replace(/\n/g,'<br>')+'</p></div>'; }
+    if(m.story){ html += '<div><div class="section-title">'+t('story_title')+'</div><p>'+escapeHtml(m.story).replace(/\n/g,'<br>')+'</p></div>'; }
 
-    if(m.noticed){ html += '<div><div class="section-title">そのときに気づいたこと</div><p>'+escapeHtml(m.noticed).replace(/\n/g,'<br>')+'</p></div>'; }
+    if(m.noticed){ html += '<div><div class="section-title">'+t('noticed_title')+'</div><p>'+escapeHtml(m.noticed).replace(/\n/g,'<br>')+'</p></div>'; }
 
-    html += '<div><div class="section-title">明日からのアクション</div>';
-    if(actions.length===0){ html += '<p class="section-hint">登録されたアクションはありません。</p>'; }
+    html += '<div><div class="section-title">'+t('actions_title')+'</div>';
+    if(actions.length===0){ html += '<p class="section-hint">'+t('no_actions_registered')+'</p>'; }
     html += '<div class="stack">';
     actions.forEach(function(a){
       html += '<div class="action-card"><p class="action-text">'+escapeHtml(a.text)+'</p>';
-      html += '<p class="meta">登録日 '+a.registeredAt+(a.stopped?' ・ 以降のチェックは停止済み':'')+'</p>';
+      html += '<p class="meta">'+t('registered_on',{date:a.registeredAt})+(a.stopped?' ・ '+t('checks_stopped'):'')+'</p>';
       html += '<div class="check-row">';
       CHECK_ORDER.forEach(function(key){
         var st = checkStatus(a, key);
         var c = a.checks[key];
         var canCheck = !c.done && !a.stopped && c.due<=todayStr();
-        html += '<div class="check-chip '+st.cls+'"><span class="check-chip-label">'+CHECK_LABELS[key]+'</span><span>'+st.text+'</span>';
+        html += '<div class="check-chip '+st.cls+'"><span class="check-chip-label">'+checkLabel(key)+'</span><span>'+st.text+'</span>';
         if(c.done && c.comment) html += '<p class="check-comment">'+escapeHtml(c.comment)+'</p>';
-        if(canCheck) html += '<button class="btn" data-action="open-check" data-action-id="'+a.id+'" data-key="'+key+'">記録する</button>';
+        if(canCheck) html += '<button class="btn" data-action="open-check" data-action-id="'+a.id+'" data-key="'+key+'">'+t('check_record_btn')+'</button>';
         html += '</div>';
       });
       html += '</div></div>';
@@ -1835,13 +2140,13 @@
     html += '<div class="danger-zone">';
     if(deleteError){ html += '<div class="notice error">'+escapeHtml(deleteError)+'</div>'; }
     if(deleteConfirmId === m.id){
-      html += '<p class="section-hint">この記録(写真・アクションを含む)を削除します。この操作は取り消せません。本当によろしいですか？</p>';
+      html += '<p class="section-hint">'+t('delete_confirm_msg')+'</p>';
       html += '<div class="row">';
-      html += '<button class="btn btn-danger" data-action="delete-model-confirm" data-id="'+m.id+'" '+(deleteBusy?'disabled':'')+'>'+(deleteBusy?'削除中…':'削除する')+'</button>';
-      html += '<button class="btn btn-secondary" data-action="delete-model-cancel">キャンセル</button>';
+      html += '<button class="btn btn-danger" data-action="delete-model-confirm" data-id="'+m.id+'" '+(deleteBusy?'disabled':'')+'>'+(deleteBusy?t('deleting'):t('delete_confirm_btn'))+'</button>';
+      html += '<button class="btn btn-secondary" data-action="delete-model-cancel">'+t('delete_cancel')+'</button>';
       html += '</div>';
     } else {
-      html += '<button class="btn btn-danger-outline" data-action="delete-model" data-id="'+m.id+'">この記録を削除する</button>';
+      html += '<button class="btn btn-danger-outline" data-action="delete-model" data-id="'+m.id+'">'+t('delete_record_btn')+'</button>';
     }
     html += '</div>';
 
@@ -1891,13 +2196,13 @@
       Array.prototype.forEach.call(stage.querySelectorAll('.pin-marker'), function(btn){
         btn.onclick = function(){
           var pin = pins.filter(function(p){ return p.id===btn.getAttribute('data-pin-id'); })[0];
-          if(pin) openFormDialog({title:pin.name, readonly:true, fields:[{key:'meaning', label:'意味するもの', type:'textarea', value:pin.meaning}]});
+          if(pin) openFormDialog({title:pin.name, readonly:true, fields:[{key:'meaning', label:t('field_meaning'), type:'textarea', value:pin.meaning}]});
         };
       });
       Array.prototype.forEach.call(stage.querySelectorAll('.rel-line'), function(line){
         line.onclick = function(){
           var rel = rels.filter(function(r){ return r.id===line.getAttribute('data-rel-id'); })[0];
-          if(rel) openFormDialog({title:'関係', readonly:true, fields:[{key:'meaning', label:'その矢印が意味するもの', type:'textarea', value:rel.meaning}]});
+          if(rel) openFormDialog({title:t('dialog_relation_title'), readonly:true, fields:[{key:'meaning', label:t('field_relation_meaning'), type:'textarea', value:rel.meaning}]});
         };
       });
     });
@@ -1919,19 +2224,19 @@
     upcoming = upcoming.slice(0,8);
 
     var html = '<div class="stack">';
-    html += '<div class="card panel stack"><h2 class="section-title">今すぐチェックが必要なアクション（'+due.length+'）</h2>';
-    if(due.length===0){ html += '<p class="section-hint">現在、期限を迎えているアクションチェックはありません。</p>'; }
+    html += '<div class="card panel stack"><h2 class="section-title">'+t('checks_due_title',{n:due.length})+'</h2>';
+    if(due.length===0){ html += '<p class="section-hint">'+t('checks_due_empty')+'</p>'; }
     due.forEach(function(d){
-      html += '<div class="due-item"><div class="info"><b>'+escapeHtml(d.action.modelTitle)+'</b>'+escapeHtml(d.action.text)+' ・ '+CHECK_LABELS[d.key]+'（期日 '+d.due+'）</div>'+
-        '<button class="btn btn-primary" data-action="open-check" data-action-id="'+d.action.id+'" data-key="'+d.key+'">記録する</button>'+
+      html += '<div class="due-item"><div class="info"><b>'+escapeHtml(d.action.modelTitle)+'</b>'+escapeHtml(d.action.text)+' ・ '+checkLabel(d.key)+t('checks_due_date_label',{date:d.due})+'</div>'+
+        '<button class="btn btn-primary" data-action="open-check" data-action-id="'+d.action.id+'" data-key="'+d.key+'">'+t('check_record_btn')+'</button>'+
       '</div>';
     });
     html += '</div>';
 
-    html += '<div class="card panel stack"><h2 class="section-title">今後の予定</h2>';
-    if(upcoming.length===0){ html += '<p class="section-hint">予定されているチェックはありません。</p>'; }
+    html += '<div class="card panel stack"><h2 class="section-title">'+t('checks_upcoming_title')+'</h2>';
+    if(upcoming.length===0){ html += '<p class="section-hint">'+t('checks_upcoming_empty')+'</p>'; }
     upcoming.forEach(function(u){
-      html += '<div class="upcoming-item"><span>'+escapeHtml(u.action.modelTitle)+' ・ '+escapeHtml(u.action.text)+'</span><span>'+CHECK_LABELS[u.key]+'（'+u.due+'）</span></div>';
+      html += '<div class="upcoming-item"><span>'+escapeHtml(u.action.modelTitle)+' ・ '+escapeHtml(u.action.text)+'</span><span>'+checkLabel(u.key)+t('checks_upcoming_date_label',{date:u.due})+'</span></div>';
     });
     html += '</div></div>';
     return html;
@@ -1943,7 +2248,7 @@
     if(!session || authMode==='reset'){
       document.getElementById('tabs').innerHTML = '';
       document.getElementById('syncNote').textContent = '';
-      document.getElementById('globalNotice').innerHTML = API_URL ? '' : '<div class="notice">API_URLが未設定です。「セットアップ手順.md」に沿ってApps ScriptウェブアプリのURLをこのページ(index.html)先頭のAPI_URLに設定してください。</div>';
+      document.getElementById('globalNotice').innerHTML = API_URL ? '' : '<div class="notice">'+t('notice_api_url_missing')+'</div>';
       el.innerHTML = authHtml();
       afterAuthRender();
       updateUserBar();
@@ -2020,9 +2325,11 @@
     else if(action==='theme-delete'){ doDeleteTheme(el.getAttribute('data-id')); }
     else if(action==='theme-add'){ doAddTheme(); }
     else if(action==='open-check'){ openCheckForm(el.getAttribute('data-action-id'), el.getAttribute('data-key')); }
+    else if(action==='toggle-lang'){ setLang(lang==='ja' ? 'en' : 'ja'); }
   });
 
   /* ---------- init ---------- */
+  applyStaticText();
   renderApp();
   if(session){
     refreshData(false);
