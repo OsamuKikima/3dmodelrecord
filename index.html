@@ -67,10 +67,13 @@
   .masthead{display:flex; align-items:baseline; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:18px;}
   .masthead .sub{font-family:var(--font-mono); font-size:12px; color:var(--text-muted); letter-spacing:.04em;}
   .manual-link{display:inline-block; margin-top:6px; font-size:12.5px; font-weight:600; text-decoration:none; color:var(--accent);}
-  .site-footer{margin-top:44px; padding-top:18px; border-top:1px solid var(--border); font-size:12.5px; color:var(--text-muted); display:flex; align-items:center; gap:14px; flex-wrap:wrap;}
+  .site-footer{margin-top:44px; padding-top:18px; border-top:1px solid var(--border); font-size:12.5px; color:var(--text-muted);}
+  .site-footer .footer-contact-row{display:flex; align-items:center; gap:14px; flex-wrap:wrap;}
   .site-footer a{color:var(--text-muted); text-decoration:none; display:inline-flex; align-items:center; gap:5px;}
   .site-footer a:hover{color:var(--accent); text-decoration:underline;}
   .site-footer svg{width:14px; height:14px; flex-shrink:0;}
+  .site-footer .footer-copyright{margin-top:10px; font-family:var(--font-mono); font-size:11px; opacity:.8;}
+  .site-footer .footer-disclaimer{margin-top:10px; font-size:11.5px; line-height:1.6; opacity:.85; max-width:640px;}
   .manual-link:hover{text-decoration:underline;}
   .lang-toggle{border:1px solid var(--border); background:var(--surface); border-radius:99px; padding:3px 11px; font-size:11.5px; font-weight:700; color:var(--text-muted); font-family:var(--font-mono); letter-spacing:.03em; margin-top:6px;}
   .lang-toggle:hover{border-color:var(--accent); color:var(--accent);}
@@ -356,15 +359,19 @@
   <nav class="tabs" id="tabs"></nav>
   <main id="view"></main>
   <footer class="site-footer">
-    <span id="footerContactLabel">このサイトについてのお問い合わせ</span>
-    <a href="mailto:kikimaosamu@gmail.com">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16v16H4z"/><path d="m4 6 8 7 8-7"/></svg>
-      <span id="footerEmailLabel">メール</span>
-    </a>
-    <a href="https://www.linkedin.com/in/osamu-kikima-319423152/" target="_blank" rel="noopener">
-      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zM3 9h4v12H3zm7 0h3.8v1.64h.05c.53-.96 1.82-1.98 3.75-1.98C21.1 8.66 22 11.1 22 14.4V21h-4v-5.9c0-1.4-.03-3.2-1.95-3.2-1.96 0-2.26 1.53-2.26 3.1V21h-4z"/></svg>
-      <span id="footerLinkedinLabel">LinkedIn</span>
-    </a>
+    <div class="footer-contact-row">
+      <span id="footerContactLabel">このサイトについてのお問い合わせ</span>
+      <a href="mailto:kikimaosamu@gmail.com">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16v16H4z"/><path d="m4 6 8 7 8-7"/></svg>
+        <span id="footerEmailLabel">メール</span>
+      </a>
+      <a href="https://www.linkedin.com/in/osamu-kikima-319423152/" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zM3 9h4v12H3zm7 0h3.8v1.64h.05c.53-.96 1.82-1.98 3.75-1.98C21.1 8.66 22 11.1 22 14.4V21h-4v-5.9c0-1.4-.03-3.2-1.95-3.2-1.96 0-2.26 1.53-2.26 3.1V21h-4z"/></svg>
+        <span id="footerLinkedinLabel">LinkedIn</span>
+      </a>
+    </div>
+    <div class="footer-disclaimer" id="footerDisclaimer">このサイトはベータ版です。このサイトの利用によって生じたデータの消失・破損等について、製作者（Osamu Kikima）は責任を負いません。あらかじめご了承の上でご利用ください。</div>
+    <div class="footer-copyright">&copy; 2026 Osamu Kikima</div>
   </footer>
 </div>
 
@@ -398,6 +405,7 @@
       app_subtitle:'モデルと意味を記録し、ときどきふりかえる', manual_link:'使い方ガイド',
       lang_toggle_label:'EN',
       footer_contact_label:'このサイトについてのお問い合わせ', footer_email_label:'メール', footer_linkedin_label:'LinkedIn',
+      footer_disclaimer:'このサイトはベータ版です。このサイトの利用によって生じたデータの消失・破損等について、製作者（Osamu Kikima）は責任を負いません。あらかじめご了承の上でご利用ください。',
       welcome:'ようこそ、<b>{name}</b>さん', logout:'ログアウト',
       notice_api_url_missing:'API_URLが未設定です。「セットアップ手順.md」に沿ってApps ScriptウェブアプリのURLをこのページ(index.html)先頭のAPI_URLに設定してください。',
       notice_api_url_missing_save:'API_URLが未設定です。保存するにはindex.html内のAPI_URLにApps ScriptウェブアプリのURLを設定してください。',
@@ -413,6 +421,14 @@
       auth_password_min:'パスワード（6文字以上）', auth_password_confirm:'パスワード（確認）',
       auth_recaptcha_missing:'RECAPTCHA_SITE_KEYが未設定のため、ロボット確認は現在スキップされています。',
       auth_register_submit:'登録する',
+      account_type_label:'アカウントの種類',
+      account_type_certified:'Certified Facilitator（認定ファシリテーター）', account_type_general:'一般',
+      account_type_general_hint:'一般アカウントは、登録できるモデルが3個までです。',
+      account_type_certified_hint:'LEGO®SERIOUS PLAY®のトレーニングを受けた方はこちらを選んでください。トレーナー名・受講年は任意入力です。',
+      auth_trainer_name:'トレーナー名（任意）', auth_trainer_name_placeholder:'例）Robert',
+      auth_training_year:'トレーニングを受けた年（任意）', auth_training_year_placeholder:'例）2014',
+      model_quota_notice:'一般アカウントでは、あと<b>{n}</b>個までモデルを登録できます。',
+      model_quota_reached:'一般アカウントで登録できる上限（3個）に達しました。さらに登録するには、Certified Facilitatorとしてのご登録が必要です。',
       err_login_required:'メールアドレスとパスワードを入力してください。',
       err_email_format:'メールアドレスの形式で入力してください。',
       err_password_min:'パスワードは6文字以上にしてください。', err_password_mismatch:'パスワードが一致しません。',
@@ -514,6 +530,7 @@
       app_subtitle:'Record your models and their meaning, and look back now and then', manual_link:'User guide',
       lang_toggle_label:'日本語',
       footer_contact_label:'Contact about this site', footer_email_label:'Email', footer_linkedin_label:'LinkedIn',
+      footer_disclaimer:'This site is in beta. The creator (Osamu Kikima) is not responsible for any loss or corruption of data resulting from use of this site. Please use it with this in mind.',
       welcome:'Welcome, <b>{name}</b>', logout:'Log out',
       notice_api_url_missing:'API_URL is not set. Please follow セットアップ手順.md (setup instructions) and set the Apps Script web app URL in API_URL at the top of this page (index.html).',
       notice_api_url_missing_save:'API_URL is not set. To save, please set the Apps Script web app URL in API_URL inside index.html.',
@@ -529,6 +546,14 @@
       auth_password_min:'Password (6+ characters)', auth_password_confirm:'Password (confirm)',
       auth_recaptcha_missing:'RECAPTCHA_SITE_KEY is not set, so the robot check is currently skipped.',
       auth_register_submit:'Sign up',
+      account_type_label:'Account type',
+      account_type_certified:'Certified Facilitator', account_type_general:'General',
+      account_type_general_hint:'General accounts can register up to 3 models.',
+      account_type_certified_hint:'Choose this if you have completed LEGO®SERIOUS PLAY® training. Trainer name and training year are optional.',
+      auth_trainer_name:'Trainer name (optional)', auth_trainer_name_placeholder:'e.g. Robert',
+      auth_training_year:'Year trained (optional)', auth_training_year_placeholder:'e.g. 2014',
+      model_quota_notice:'As a general account, you can register up to <b>{n}</b> more model(s).',
+      model_quota_reached:'You\'ve reached the limit for general accounts (3 models). Register as a Certified Facilitator to add more.',
       err_login_required:'Please enter your email address and password.',
       err_email_format:'Please enter a valid email address.',
       err_password_min:'Password must be at least 6 characters.', err_password_mismatch:'Passwords do not match.',
@@ -657,6 +682,7 @@
     var footerContactEl = document.getElementById('footerContactLabel'); if(footerContactEl) footerContactEl.textContent = t('footer_contact_label');
     var footerEmailEl = document.getElementById('footerEmailLabel'); if(footerEmailEl) footerEmailEl.textContent = t('footer_email_label');
     var footerLinkedinEl = document.getElementById('footerLinkedinLabel'); if(footerLinkedinEl) footerLinkedinEl.textContent = t('footer_linkedin_label');
+    var footerDisclaimerEl = document.getElementById('footerDisclaimer'); if(footerDisclaimerEl) footerDisclaimerEl.textContent = t('footer_disclaimer');
   }
   /** 言語を切り替えて、静的部分・アプリ部分の両方を再描画する。 */
   function setLang(l){
@@ -687,7 +713,8 @@
     '無効なリンクです。もう一度パスワード再設定をお試しください。':'This link is invalid. Please request a password reset again.',
     'リンクの有効期限が切れています。もう一度パスワード再設定をお試しください。':'This link has expired. Please request a password reset again.',
     '画像データがありません':'No image data was provided',
-    '記録が見つかりません。':'Record not found.'
+    '記録が見つかりません。':'Record not found.',
+    '一般アカウントで登録できるモデルは3個までです。':'A general account can register up to 3 models.'
   };
   var SERVER_MSG_EN_PREFIX = {
     'ロボット確認に失敗しました。もう一度お試しください。':'Robot verification failed. Please try again.',
@@ -827,6 +854,8 @@
   var currentTheme = null; // {id, text, textEn} | null
   var themesList = []; // サーバー(Themesシート)から取得したお題一覧 [{id,text,textEn}, ...]
   var isAdmin = false; // お題の追加・修正ができる管理者かどうか(サーバーがセッションから判定)
+  var myAccountType = ''; // 'certified' | 'general' | ''（未ログイン）。サーバー(listAll)が判定する
+  var myModelLimit = null; // 一般アカウントの場合のみ数値(現在は3)。certified/未ログインはnull
   var medalsEarned = []; // 自分が獲得済みのメダル [{milestone, awardedAt}, ...]
   var medalCount = 0; // 自分がこれまでに登録したモデルの件数(サーバー算出)
   var editingThemeId = null;
@@ -847,6 +876,7 @@
   var authError = '';
   var authSuccess = '';
   var authBusy = false;
+  var authAccountType = 'certified'; // 新規登録フォームで選択中のアカウント種別('certified'|'general')
   var recaptchaWidgetId = null;
   var recaptchaApiReady = false;
   var resetToken = ''; // メール内のパスワード再設定リンク(?reset=...)から読み取ったトークン
@@ -1061,6 +1091,20 @@
     } else {
       html += '<label class="field"><span>'+t('auth_email')+'</span><input type="email" id="auth-username" autocomplete="username" /></label>';
       html += '<label class="field"><span>'+t('auth_display_name')+'</span><input type="text" id="auth-displayname" placeholder="'+escapeHtml(t('auth_display_name_placeholder'))+'" /></label>';
+      html += '<div class="field"><span>'+t('account_type_label')+'</span>';
+      html += '<div class="account-type-choices" style="display:flex; flex-direction:column; gap:6px; margin-top:4px;">';
+      ['certified','general'].forEach(function(atype){
+        html += '<label style="display:flex; align-items:center; gap:6px; font-weight:400;">'
+          + '<input type="radio" name="auth-account-type" data-action="auth-account-type" data-type="'+atype+'" '+(authAccountType===atype?'checked':'')+' />'
+          + '<span>'+t('account_type_'+atype)+'</span></label>';
+      });
+      html += '</div>';
+      html += '<p class="section-hint">'+(authAccountType==='general' ? t('account_type_general_hint') : t('account_type_certified_hint'))+'</p>';
+      if(authAccountType === 'certified'){
+        html += '<label class="field"><span>'+t('auth_trainer_name')+'</span><input type="text" id="auth-trainer-name" placeholder="'+escapeHtml(t('auth_trainer_name_placeholder'))+'" /></label>';
+        html += '<label class="field"><span>'+t('auth_training_year')+'</span><input type="text" id="auth-training-year" placeholder="'+escapeHtml(t('auth_training_year_placeholder'))+'" /></label>';
+      }
+      html += '</div>';
       html += '<label class="field"><span>'+t('auth_password_min')+'</span><input type="password" id="auth-password" autocomplete="new-password" /></label>';
       html += '<label class="field"><span>'+t('auth_password_confirm')+'</span><input type="password" id="auth-password2" autocomplete="new-password" /></label>';
       html += '<div id="recaptchaContainer"></div>';
@@ -1109,6 +1153,10 @@
     var displayName = document.getElementById('auth-displayname').value.trim();
     var password = document.getElementById('auth-password').value;
     var password2 = document.getElementById('auth-password2').value;
+    var trainerNameEl = document.getElementById('auth-trainer-name');
+    var trainingYearEl = document.getElementById('auth-training-year');
+    var trainerName = (authAccountType === 'certified' && trainerNameEl) ? trainerNameEl.value.trim() : '';
+    var trainingYear = (authAccountType === 'certified' && trainingYearEl) ? trainingYearEl.value.trim() : '';
     if(!username || !password){ authError=t('err_login_required'); renderApp(); return; }
     if(!EMAIL_RE.test(username)){ authError=t('err_email_format'); renderApp(); return; }
     if(password.length < 6){ authError=t('err_password_min'); renderApp(); return; }
@@ -1117,7 +1165,7 @@
     if(RECAPTCHA_SITE_KEY && !token){ authError=t('err_recaptcha_required'); renderApp(); return; }
     authBusy = true; authError=''; authSuccess=''; renderApp();
     try{
-      var data = await apiCall('register', {username:username, password:password, displayName:displayName, recaptchaToken:token});
+      var data = await apiCall('register', {username:username, password:password, displayName:displayName, recaptchaToken:token, accountType:authAccountType, trainerName:trainerName, trainingYear:trainingYear});
       session = data; persistSession();
       authBusy = false; currentView = 'list';
       renderApp();
@@ -1187,6 +1235,8 @@
       actionsList = data.actions || [];
       themesList = data.themes || [];
       isAdmin = !!data.isAdmin;
+      myAccountType = data.accountType || '';
+      myModelLimit = (typeof data.modelLimit === 'number') ? data.modelLimit : null;
       if(session){
         try{
           var medalData = await apiCall('listMedals', {});
@@ -1842,11 +1892,21 @@
       '<button type="button" class="btn btn-secondary" data-action="photo-remove" data-slot="'+slot.key+'">'+t('slot_remove')+'</button></div>'+
     '</div>';
   }
+  function myModelQuotaRemaining(){
+    if(myAccountType !== 'general' || typeof myModelLimit !== 'number') return null;
+    var mineCount = modelsList.filter(function(m){ return m.isMine; }).length;
+    return Math.max(0, myModelLimit - mineCount);
+  }
   function viewNewHtml(){
     var html = '<div class="card panel stack">';
     html += '<h2 class="section-title">'+t('new_record_title')+'</h2>';
     if(!API_URL) html += '<div class="notice">'+t('notice_api_url_missing_save')+'</div>';
     if(formError) html += '<div class="notice error">'+escapeHtml(formError)+'</div>';
+    var quotaRemaining = myModelQuotaRemaining();
+    var quotaReached = quotaRemaining !== null && quotaRemaining <= 0;
+    if(quotaRemaining !== null){
+      html += '<div class="notice'+(quotaReached?' error':'')+'">'+(quotaReached ? t('model_quota_reached') : t('model_quota_notice',{n:quotaRemaining}))+'</div>';
+    }
     if(draft.theme){ html += '<div class="notice">'+t('theme_mode_notice',{theme:escapeHtml((lang==='en' && draft.themeEn) ? draft.themeEn : draft.theme)})+'</div>'; }
     html += '<div class="field-grid">';
     html += '<label class="field"><span>'+t('field_title')+'</span><input type="text" id="f-title" value="'+escapeHtml(draft.title)+'" placeholder="'+escapeHtml(t('field_title_placeholder'))+'" /></label>';
@@ -1896,7 +1956,7 @@
     });
     html += '</div><button type="button" class="btn" data-action="action-add-row" style="margin-top:8px;">'+t('action_add')+'</button></div>';
 
-    html += '<div class="row" style="justify-content:flex-end;"><button type="button" class="btn btn-primary" data-action="save-new-model" '+(saving?'disabled':'')+'>'+(saving?t('saving'):t('save_record'))+'</button></div>';
+    html += '<div class="row" style="justify-content:flex-end;"><button type="button" class="btn btn-primary" data-action="save-new-model" '+((saving||quotaReached)?'disabled':'')+'>'+(saving?t('saving'):t('save_record'))+'</button></div>';
     html += '</div>';
     return html;
   }
@@ -2343,6 +2403,7 @@
     if(!el) return;
     var action = el.getAttribute('data-action');
     if(action==='auth-mode'){ authMode = el.getAttribute('data-mode'); authError=''; authSuccess=''; renderApp(); }
+    else if(action==='auth-account-type'){ authAccountType = el.getAttribute('data-type'); renderApp(); }
     else if(action==='do-login'){ doLogin(); }
     else if(action==='do-register'){ doRegister(); }
     else if(action==='do-request-reset'){ doRequestPasswordReset(); }
