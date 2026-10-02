@@ -64,8 +64,11 @@
   .masthead{display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:8px;}
   .masthead h1{font-size:clamp(22px,4vw,30px); font-weight:600; letter-spacing:.02em;}
   .masthead .sub{font-family:var(--font-mono); font-size:12px; color:var(--text-muted); letter-spacing:.04em; margin-top:4px;}
+  .header-actions{display:flex; flex-direction:column; align-items:flex-end; gap:8px;}
   .back-link{white-space:nowrap; font-size:14px; font-weight:600; text-decoration:none; border:1px solid var(--border); border-radius:99px; padding:8px 16px; background:var(--surface); transition:transform .14s ease, border-color .14s ease;}
   .back-link:hover{border-color:var(--accent); transform:translateY(-1px);}
+  .lang-toggle{border:1px solid var(--border); background:var(--surface); border-radius:99px; padding:5px 13px; font-size:12px; font-weight:700; color:var(--text-muted); font-family:var(--font-mono); letter-spacing:.03em; cursor:pointer; transition:border-color .14s ease, color .14s ease;}
+  .lang-toggle:hover{border-color:var(--accent); color:var(--accent);}
 
   .club-banner{
     display:inline-flex; align-items:center; gap:10px;
@@ -129,13 +132,15 @@
     .mock .row{flex-wrap:wrap;}
     .mock label{min-width:100%;}
   }
+
+  [hidden]{display:none !important;}
 </style>
 </head>
 <body>
 <div id="shell">
   <header class="masthead">
     <div>
-      <h1>使い方ガイド</h1>
+      <h1><span class="i18n-ja">使い方ガイド</span><span class="i18n-en" hidden>User Guide</span></h1>
       <div class="club-banner">
         <svg class="club-icon" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
           <rect x="14" y="12" width="20" height="16" rx="4" fill="var(--warm)"/>
@@ -148,206 +153,319 @@
           <path d="M27.7 30.1l2.1 2.1 4.3-4.6" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
         </svg>
         <div class="club-banner-text">
-          <span class="club-text">モデログ倶楽部</span>
+          <span class="club-text"><span class="i18n-ja">モデログ倶楽部</span><span class="i18n-en" hidden>Modelog Club</span></span>
           <span class="wordmark" aria-hidden="true"><span class="wm-model">mode</span><span class="wm-l">l</span><span class="wm-log">og</span></span>
         </div>
       </div>
-      <div class="sub">モデログ &mdash; モデルと意味を記録し、ときどきふりかえる</div>
+      <div class="sub"><span class="i18n-ja">モデログ &mdash; モデルと意味を記録し、ときどきふりかえる</span><span class="i18n-en" hidden>Modelog &mdash; Record your models and their meaning, and look back now and then</span></div>
     </div>
-    <a href="index.html" class="back-link">&larr; アプリを開く</a>
+    <div class="header-actions">
+      <a href="index.html" class="back-link"><span class="i18n-ja">&larr; アプリを開く</span><span class="i18n-en" hidden>&larr; Open the app</span></a>
+      <button type="button" class="lang-toggle" id="langToggle">EN</button>
+    </div>
   </header>
 
-  <p class="lede">このページは「モデログ」の使い方をまとめたマニュアルです。アカウント登録から、モデルの記録、お題モード、パスワードを忘れたときの対処まで、順番に読めば一通り使えるようになります。</p>
+  <p class="lede">
+    <span class="i18n-ja">このページは「モデログ」の使い方をまとめたマニュアルです。アカウント登録から、モデルの記録、お題モード、パスワードを忘れたときの対処まで、順番に読めば一通り使えるようになります。</span>
+    <span class="i18n-en" hidden>This page is a manual for how to use Modelog. Read it in order &mdash; from creating an account, through recording models and theme mode, to what to do if you forget your password &mdash; and you'll be able to use everything the app offers.</span>
+  </p>
 
   <nav class="toc">
-    <h2>もくじ</h2>
+    <h2><span class="i18n-ja">もくじ</span><span class="i18n-en" hidden>Contents</span></h2>
     <ol>
-      <li><a href="#account">1. アカウント登録・ログイン</a></li>
-      <li><a href="#forgot">2. パスワードを忘れたとき</a></li>
-      <li><a href="#new-record">3. 新規記録をつくる</a></li>
-      <li><a href="#annotate">4. 写真に注釈をつける</a></li>
-      <li><a href="#visibility">5. 公開・非公開を選ぶ</a></li>
-      <li><a href="#list">6. 記録一覧・月別一覧・詳細</a></li>
-      <li><a href="#delete">7. 記録を削除する</a></li>
-      <li><a href="#theme-mode">8. お題モード</a></li>
-      <li><a href="#theme-admin">9. お題を管理する（管理者向け）</a></li>
-      <li><a href="#checks">10. アクションチェック</a></li>
-      <li><a href="#medals">11. 特別な記録（メダルと登録数の推移）</a></li>
-      <li><a href="#faq">12. よくある質問</a></li>
+      <li><a href="#account"><span class="i18n-ja">1. アカウント登録・ログイン</span><span class="i18n-en" hidden>1. Creating an account &amp; logging in</span></a></li>
+      <li><a href="#forgot"><span class="i18n-ja">2. パスワードを忘れたとき</span><span class="i18n-en" hidden>2. If you forget your password</span></a></li>
+      <li><a href="#new-record"><span class="i18n-ja">3. 新規記録をつくる</span><span class="i18n-en" hidden>3. Creating a new record</span></a></li>
+      <li><a href="#annotate"><span class="i18n-ja">4. 写真に注釈をつける</span><span class="i18n-en" hidden>4. Annotating photos</span></a></li>
+      <li><a href="#visibility"><span class="i18n-ja">5. 公開・非公開を選ぶ</span><span class="i18n-en" hidden>5. Choosing public or private</span></a></li>
+      <li><a href="#list"><span class="i18n-ja">6. 記録一覧・月別一覧・詳細</span><span class="i18n-en" hidden>6. Records list, monthly list &amp; detail view</span></a></li>
+      <li><a href="#delete"><span class="i18n-ja">7. 記録を削除する</span><span class="i18n-en" hidden>7. Deleting a record</span></a></li>
+      <li><a href="#theme-mode"><span class="i18n-ja">8. お題モード</span><span class="i18n-en" hidden>8. Theme mode</span></a></li>
+      <li><a href="#theme-admin"><span class="i18n-ja">9. お題を管理する（管理者向け）</span><span class="i18n-en" hidden>9. Managing prompts (for administrators)</span></a></li>
+      <li><a href="#checks"><span class="i18n-ja">10. アクションチェック</span><span class="i18n-en" hidden>10. Action checks</span></a></li>
+      <li><a href="#medals"><span class="i18n-ja">11. 特別な記録（メダルと登録数の推移）</span><span class="i18n-en" hidden>11. Special records (medals &amp; registration trend)</span></a></li>
+      <li><a href="#faq"><span class="i18n-ja">12. よくある質問</span><span class="i18n-en" hidden>12. FAQ</span></a></li>
     </ol>
   </nav>
 
   <section class="step" id="account">
-    <h2><span class="num">01</span>アカウント登録・ログイン</h2>
-    <p>このアプリは複数人で共有して使うことを想定しており、記録する前にアカウント登録（またはログイン）が必要です。ログインIDには<strong>メールアドレス</strong>を使います。</p>
+    <h2><span class="num">01</span><span class="i18n-ja">アカウント登録・ログイン</span><span class="i18n-en" hidden>Creating an account &amp; logging in</span></h2>
+    <p>
+      <span class="i18n-ja">このアプリは複数人で共有して使うことを想定しており、記録する前にアカウント登録（またはログイン）が必要です。ログインIDには<strong>メールアドレス</strong>を使います。</span>
+      <span class="i18n-en" hidden>This app is designed to be shared by multiple people, so you need to create an account (or log in) before recording anything. Your login ID is your <strong>email address</strong>.</span>
+    </p>
     <ol>
-      <li>アプリを開き、「新規登録」タブを選ぶ。</li>
-      <li>メールアドレス・表示名（記録に表示される名前）・パスワード（6文字以上）を入力する。</li>
-      <li>「私はロボットではありません」にチェックを入れる。</li>
-      <li>「登録する」を押すと、そのまま自動的にログイン状態になる。</li>
+      <li><span class="i18n-ja">アプリを開き、「新規登録」タブを選ぶ。</span><span class="i18n-en" hidden>Open the app and select the &ldquo;Sign up&rdquo; tab.</span></li>
+      <li><span class="i18n-ja">メールアドレス・表示名（記録に表示される名前）・パスワード（6文字以上）を入力する。</span><span class="i18n-en" hidden>Enter your email address, display name (the name shown on your records), and a password (6+ characters).</span></li>
+      <li><span class="i18n-ja">「私はロボットではありません」にチェックを入れる。</span><span class="i18n-en" hidden>Check &ldquo;I'm not a robot.&rdquo;</span></li>
+      <li><span class="i18n-ja">「登録する」を押すと、そのまま自動的にログイン状態になる。</span><span class="i18n-en" hidden>Press &ldquo;Sign up&rdquo; and you'll be logged in automatically.</span></li>
     </ol>
     <div class="mock">
-      <div class="row"><label>メールアドレス</label><div class="field">you@example.com</div></div>
-      <div class="row"><label>表示名</label><div class="field">山田 太郎</div></div>
-      <div class="row"><label>パスワード</label><div class="field">••••••••</div></div>
-      <div class="row"><span class="btn primary">登録する</span></div>
+      <div class="row"><label><span class="i18n-ja">メールアドレス</span><span class="i18n-en" hidden>Email address</span></label><div class="field">you@example.com</div></div>
+      <div class="row"><label><span class="i18n-ja">表示名</span><span class="i18n-en" hidden>Display name</span></label><div class="field"><span class="i18n-ja">山田 太郎</span><span class="i18n-en" hidden>Jane Smith</span></div></div>
+      <div class="row"><label><span class="i18n-ja">パスワード</span><span class="i18n-en" hidden>Password</span></label><div class="field">••••••••</div></div>
+      <div class="row"><span class="btn primary"><span class="i18n-ja">登録する</span><span class="i18n-en" hidden>Sign up</span></span></div>
     </div>
-    <p>2回目以降は「ログイン」タブから、登録したメールアドレスとパスワードでログインします。表示名は記録一覧などで「記録者」として表示される名前で、実名でなくても構いません。</p>
-    <div class="tip"><span class="label">ポイント</span>一度ログインすると、同じブラウザでは次回以降も自動的にログイン状態が保たれます。ログイン状態を解除したいときは、右上の「ログアウト」を押してください。</div>
+    <p>
+      <span class="i18n-ja">2回目以降は「ログイン」タブから、登録したメールアドレスとパスワードでログインします。表示名は記録一覧などで「記録者」として表示される名前で、実名でなくても構いません。</span>
+      <span class="i18n-en" hidden>From your second visit on, log in from the &ldquo;Log in&rdquo; tab with your registered email address and password. Your display name is shown as the &ldquo;recorder&rdquo; on the records list and elsewhere, and doesn't have to be your real name.</span>
+    </p>
+    <div class="tip"><span class="label"><span class="i18n-ja">ポイント</span><span class="i18n-en" hidden>Point</span></span>
+      <span class="i18n-ja">一度ログインすると、同じブラウザでは次回以降も自動的にログイン状態が保たれます。ログイン状態を解除したいときは、右上の「ログアウト」を押してください。</span>
+      <span class="i18n-en" hidden>Once you log in, the same browser keeps you logged in automatically next time. To log out, press &ldquo;Log out&rdquo; in the top right.</span>
+    </div>
   </section>
 
   <section class="step" id="forgot">
-    <h2><span class="num">02</span>パスワードを忘れたとき</h2>
-    <p>ログイン画面の下に「パスワードをお忘れですか？」というリンクがあります。</p>
+    <h2><span class="num">02</span><span class="i18n-ja">パスワードを忘れたとき</span><span class="i18n-en" hidden>If you forget your password</span></h2>
+    <p><span class="i18n-ja">ログイン画面の下に「パスワードをお忘れですか？」というリンクがあります。</span><span class="i18n-en" hidden>There's a &ldquo;Forgot your password?&rdquo; link below the login screen.</span></p>
     <ol>
-      <li>「パスワードをお忘れですか？」を押し、登録したメールアドレスを入力して送信する。</li>
-      <li>そのメールアドレス宛に、パスワード再設定用のリンクが記載されたメールが届く。</li>
-      <li>メール内のリンクを開くと、新しいパスワードを設定する画面が表示されるので、新しいパスワードを2回入力して「パスワードを再設定する」を押す。</li>
-      <li>再設定が完了したら、新しいパスワードでログインする。</li>
+      <li><span class="i18n-ja">「パスワードをお忘れですか？」を押し、登録したメールアドレスを入力して送信する。</span><span class="i18n-en" hidden>Press &ldquo;Forgot your password?&rdquo;, enter your registered email address, and submit.</span></li>
+      <li><span class="i18n-ja">そのメールアドレス宛に、パスワード再設定用のリンクが記載されたメールが届く。</span><span class="i18n-en" hidden>You'll receive an email at that address with a password reset link.</span></li>
+      <li><span class="i18n-ja">メール内のリンクを開くと、新しいパスワードを設定する画面が表示されるので、新しいパスワードを2回入力して「パスワードを再設定する」を押す。</span><span class="i18n-en" hidden>Open the link in the email to reach the screen for setting a new password. Enter your new password twice and press &ldquo;Reset password.&rdquo;</span></li>
+      <li><span class="i18n-ja">再設定が完了したら、新しいパスワードでログインする。</span><span class="i18n-en" hidden>Once the reset is complete, log in with your new password.</span></li>
     </ol>
-    <div class="warn"><span class="label">ご注意</span>再設定用のリンクは、発行から<strong>30分</strong>で無効になり、また<strong>1回使うと無効</strong>になります。時間が経ってしまった場合や、うまくいかない場合は、もう一度「パスワードをお忘れですか？」からやり直してください。メールが届かない場合は、迷惑メールフォルダも確認してみてください。</div>
+    <div class="warn"><span class="label"><span class="i18n-ja">ご注意</span><span class="i18n-en" hidden>Note</span></span>
+      <span class="i18n-ja">再設定用のリンクは、発行から<strong>30分</strong>で無効になり、また<strong>1回使うと無効</strong>になります。時間が経ってしまった場合や、うまくいかない場合は、もう一度「パスワードをお忘れですか？」からやり直してください。メールが届かない場合は、迷惑メールフォルダも確認してみてください。</span>
+      <span class="i18n-en" hidden>The reset link expires <strong>30 minutes</strong> after it's issued, and <strong>becomes invalid after one use</strong>. If too much time has passed or something goes wrong, start again from &ldquo;Forgot your password?&rdquo; If you don't receive the email, please also check your spam folder.</span>
+    </div>
   </section>
 
   <section class="step" id="new-record">
-    <h2><span class="num">03</span>新規記録をつくる</h2>
-    <p>ログイン後、「新規記録」タブから、作ったモデルを記録できます。</p>
-    <h3>入力する項目</h3>
+    <h2><span class="num">03</span><span class="i18n-ja">新規記録をつくる</span><span class="i18n-en" hidden>Creating a new record</span></h2>
+    <p><span class="i18n-ja">ログイン後、「新規記録」タブから、作ったモデルを記録できます。</span><span class="i18n-en" hidden>Once logged in, you can record a model you've built from the &ldquo;New record&rdquo; tab.</span></p>
+    <h3><span class="i18n-ja">入力する項目</span><span class="i18n-en" hidden>Fields you'll fill in</span></h3>
     <ul>
-      <li><strong>タイトル</strong>：モデルの名前（必須）</li>
-      <li><strong>日付</strong>：作成した日（必須）</li>
-      <li><strong>場所・イベント</strong>：ワークショップ名などがあれば</li>
-      <li><strong>モデルが示すストーリー（全体の概要）</strong>：モデル全体が表現している世界観やストーリー</li>
-      <li><strong>公開設定</strong>：他の人にも見せるか、自分だけにするか（詳しくは <a href="#visibility">5. 公開・非公開を選ぶ</a>）</li>
-      <li><strong>記録の方法</strong>：どう写真・動画を残すか（下記「記録の方法を選ぶ」参照）</li>
-      <li><strong>そのときに気づいたこと</strong>：モデルを作りながら気づいたこと</li>
-      <li><strong>明日からのアクション</strong>：この気づきをもとに、明日から取り組むこと（複数追加可）</li>
+      <li><span class="i18n-ja"><strong>タイトル</strong>：モデルの名前（必須）</span><span class="i18n-en" hidden><strong>Title</strong>: the model's name (required)</span></li>
+      <li><span class="i18n-ja"><strong>日付</strong>：作成した日（必須）</span><span class="i18n-en" hidden><strong>Date</strong>: the day you built it (required)</span></li>
+      <li><span class="i18n-ja"><strong>場所・イベント</strong>：ワークショップ名などがあれば</span><span class="i18n-en" hidden><strong>Location / event</strong>: a workshop name, if there is one</span></li>
+      <li><span class="i18n-ja"><strong>モデルが示すストーリー（全体の概要）</strong>：モデル全体が表現している世界観やストーリー</span><span class="i18n-en" hidden><strong>The story the model tells (overall summary)</strong>: the world or story the whole model expresses</span></li>
+      <li><span class="i18n-ja"><strong>公開設定</strong>：他の人にも見せるか、自分だけにするか（詳しくは <a href="#visibility">5. 公開・非公開を選ぶ</a>）</span><span class="i18n-en" hidden><strong>Visibility</strong>: whether to share it with others or keep it to yourself (see <a href="#visibility">5. Choosing public or private</a>)</span></li>
+      <li><span class="i18n-ja"><strong>記録の方法</strong>：どう写真・動画を残すか（下記「記録の方法を選ぶ」参照）</span><span class="i18n-en" hidden><strong>Recording method</strong>: how you'll capture photos or video (see &ldquo;Choosing a recording method&rdquo; below)</span></li>
+      <li><span class="i18n-ja"><strong>そのときに気づいたこと</strong>：モデルを作りながら気づいたこと</span><span class="i18n-en" hidden><strong>What you noticed</strong>: what you noticed while building the model</span></li>
+      <li><span class="i18n-ja"><strong>明日からのアクション</strong>：この気づきをもとに、明日から取り組むこと（複数追加可）</span><span class="i18n-en" hidden><strong>Actions starting tomorrow</strong>: what you'll start doing tomorrow based on this insight (you can add more than one)</span></li>
     </ul>
-    <p>すべて入力したら、右下の「この記録を保存」を押します。</p>
-    <div class="tip"><span class="label">ポイント</span>「明日からのアクション」を登録すると、3日後・1週間後・1ヶ月後・3ヶ月後の4つのタイミングで、「アクションチェック」タブに振り返りの通知が表示されるようになります（<a href="#checks">10. アクションチェック</a>参照）。</div>
+    <p><span class="i18n-ja">すべて入力したら、右下の「この記録を保存」を押します。</span><span class="i18n-en" hidden>Once everything is filled in, press &ldquo;Save this record&rdquo; in the bottom right.</span></p>
+    <div class="tip"><span class="label"><span class="i18n-ja">ポイント</span><span class="i18n-en" hidden>Point</span></span>
+      <span class="i18n-ja">「明日からのアクション」を登録すると、3日後・1週間後・1ヶ月後・3ヶ月後の4つのタイミングで、「アクションチェック」タブに振り返りの通知が表示されるようになります（<a href="#checks">10. アクションチェック</a>参照）。</span>
+      <span class="i18n-en" hidden>If you register &ldquo;Actions starting tomorrow,&rdquo; a reminder appears in the &ldquo;Action checks&rdquo; tab at four points: 3 days, 1 week, 1 month, and 3 months later (see <a href="#checks">10. Action checks</a>).</span>
+    </div>
 
-    <h3>記録の方法を選ぶ</h3>
-    <p>「記録の方法」では、4つの中から選べます。通常は1枚で十分ですが、複数の角度や動画を残したいときだけ、他の方法に切り替えてください。</p>
+    <h3><span class="i18n-ja">記録の方法を選ぶ</span><span class="i18n-en" hidden>Choosing a recording method</span></h3>
+    <p>
+      <span class="i18n-ja">「記録の方法」では、4つの中から選べます。通常は1枚で十分ですが、複数の角度や動画を残したいときだけ、他の方法に切り替えてください。</span>
+      <span class="i18n-en" hidden>For &ldquo;Recording method,&rdquo; you can choose from four options. One photo is usually enough &mdash; switch to another method only when you want multiple angles or a video.</span>
+    </p>
     <ul>
-      <li><strong>1枚で記録する（標準）</strong>：モデル全体が分かる写真を1枚だけ登録します。もっともシンプルな記録方法です。</li>
-      <li><strong>2枚で記録する</strong>：写真を2枚まで登録できます。それぞれの写真に「全体」「アップ」のような、好きなラベルを自由に付けられます。</li>
-      <li><strong>5枚（立体）で記録する</strong>：正面・右・左・上・背面のうち、撮影した角度を登録すると、記録の詳細画面で写真を立体（立方体）として回転させながら見られます。</li>
-      <li><strong>動画で記録する</strong>：写真の代わりに動画（30MBまで）を1本登録します。動画には、次の章で説明する「注釈（ピン）」は付けられません。</li>
+      <li><span class="i18n-ja"><strong>1枚で記録する（標準）</strong>：モデル全体が分かる写真を1枚だけ登録します。もっともシンプルな記録方法です。</span><span class="i18n-en" hidden><strong>1 photo (standard)</strong>: register a single photo showing the whole model. The simplest recording method.</span></li>
+      <li><span class="i18n-ja"><strong>2枚で記録する</strong>：写真を2枚まで登録できます。それぞれの写真に「全体」「アップ」のような、好きなラベルを自由に付けられます。</span><span class="i18n-en" hidden><strong>2 photos</strong>: register up to two photos. Give each one any label you like, such as &ldquo;Overall&rdquo; or &ldquo;Close-up.&rdquo;</span></li>
+      <li><span class="i18n-ja"><strong>5枚（立体）で記録する</strong>：正面・右・左・上・背面のうち、撮影した角度を登録すると、記録の詳細画面で写真を立体（立方体）として回転させながら見られます。</span><span class="i18n-en" hidden><strong>5 photos (3D cube)</strong>: register whichever angles you photographed &mdash; front, right, left, top, back &mdash; and view them as a rotating 3D cube on the record's detail screen.</span></li>
+      <li><span class="i18n-ja"><strong>動画で記録する</strong>：写真の代わりに動画（30MBまで）を1本登録します。動画には、次の章で説明する「注釈（ピン）」は付けられません。</span><span class="i18n-en" hidden><strong>Video</strong>: register one video (up to 30MB) instead of photos. Videos can't have the &ldquo;annotations (pins)&rdquo; described in the next section.</span></li>
     </ul>
-    <div class="tip"><span class="label">ポイント</span>一度保存した記録の記録方法を後から変更する機能は現在ありません。この機能が追加される前に登録した記録は、これまでどおり5枚（立体）の記録として表示されます。</div>
+    <div class="tip"><span class="label"><span class="i18n-ja">ポイント</span><span class="i18n-en" hidden>Point</span></span>
+      <span class="i18n-ja">一度保存した記録の記録方法を後から変更する機能は現在ありません。この機能が追加される前に登録した記録は、これまでどおり5枚（立体）の記録として表示されます。</span>
+      <span class="i18n-en" hidden>There's currently no way to change a record's recording method after it's been saved. Records registered before this feature was added still display as before, as 5-photo (3D cube) records.</span>
+    </div>
   </section>
 
   <section class="step" id="annotate">
-    <h2><span class="num">04</span>写真に注釈をつける</h2>
-    <p>登録した写真には、モデルの各部分が「何を意味しているか」を書き込めます。記録の詳細画面、または新規記録の作成中に、写真の「注釈を編集」を押すと注釈用の画面が開きます。</p>
+    <h2><span class="num">04</span><span class="i18n-ja">写真に注釈をつける</span><span class="i18n-en" hidden>Annotating photos</span></h2>
+    <p>
+      <span class="i18n-ja">登録した写真には、モデルの各部分が「何を意味しているか」を書き込めます。記録の詳細画面、または新規記録の作成中に、写真の「注釈を編集」を押すと注釈用の画面が開きます。</span>
+      <span class="i18n-en" hidden>You can note what each part of the model means on a registered photo. From a record's detail screen, or while creating a new record, press &ldquo;Edit annotations&rdquo; on a photo to open the annotation screen.</span>
+    </p>
     <ol>
-      <li>写真上の、意味を記録したい部分をクリックしてピンを置く。</li>
-      <li>「部分の意味を記録する」ダイアログが開くので、「どのブロック・表現を指している？」（そのブロックや形の名前）と、その意味を入力する。</li>
-      <li>複数の部分どうしの関係性（つながり・対立など）も記録できます。</li>
+      <li><span class="i18n-ja">写真上の、意味を記録したい部分をクリックしてピンを置く。</span><span class="i18n-en" hidden>Click the part of the photo whose meaning you want to record to place a pin.</span></li>
+      <li><span class="i18n-ja">「部分の意味を記録する」ダイアログが開くので、「どのブロック・表現を指している？」（そのブロックや形の名前）と、その意味を入力する。</span><span class="i18n-en" hidden>The &ldquo;Record the meaning of this part&rdquo; dialog opens &mdash; enter which block or shape it refers to (its name) and what it means.</span></li>
+      <li><span class="i18n-ja">複数の部分どうしの関係性（つながり・対立など）も記録できます。</span><span class="i18n-en" hidden>You can also record relationships between parts (connections, conflicts, and so on).</span></li>
     </ol>
-    <p>記録した注釈は、詳細画面で「ピン・関係の表示」にチェックが入っているときに写真上に表示されます。</p>
-    <div class="warn"><span class="label">ご注意</span>「動画で記録する」を選んだ記録には、この注釈（ピン）機能はありません。</div>
+    <p><span class="i18n-ja">記録した注釈は、詳細画面で「ピン・関係の表示」にチェックが入っているときに写真上に表示されます。</span><span class="i18n-en" hidden>Recorded annotations appear on the photo when &ldquo;Show pins &amp; relations&rdquo; is checked on the detail screen.</span></p>
+    <div class="warn"><span class="label"><span class="i18n-ja">ご注意</span><span class="i18n-en" hidden>Note</span></span>
+      <span class="i18n-ja">「動画で記録する」を選んだ記録には、この注釈（ピン）機能はありません。</span>
+      <span class="i18n-en" hidden>Records made with &ldquo;Video&rdquo; don't have this annotation (pin) feature.</span>
+    </div>
   </section>
 
   <section class="step" id="visibility">
-    <h2><span class="num">05</span>公開・非公開を選ぶ</h2>
-    <p>新規記録の作成画面には「この記録を他の人にも公開する」というチェックボックスがあります。</p>
+    <h2><span class="num">05</span><span class="i18n-ja">公開・非公開を選ぶ</span><span class="i18n-en" hidden>Choosing public or private</span></h2>
+    <p><span class="i18n-ja">新規記録の作成画面には「この記録を他の人にも公開する」というチェックボックスがあります。</span><span class="i18n-en" hidden>The new-record screen has a checkbox labeled &ldquo;Share this record with others.&rdquo;</span></p>
     <div class="mock">
-      <div class="row"><input type="checkbox" checked disabled style="margin:0;" /><span style="font-size:13.5px;">この記録を他の人にも公開する（チェックを外すと自分だけに表示されます）</span></div>
+      <div class="row"><input type="checkbox" checked disabled style="margin:0;" /><span style="font-size:13.5px;"><span class="i18n-ja">この記録を他の人にも公開する（チェックを外すと自分だけに表示されます）</span><span class="i18n-en" hidden>Share this record with others (uncheck to keep it visible only to you)</span></span></div>
     </div>
     <ul>
-      <li><strong>チェックを入れたまま（初期状態）</strong>：他のログインユーザーからも記録一覧・月別一覧・詳細画面で見られます。</li>
-      <li><strong>チェックを外す</strong>：自分がログインしているときだけ見え、他の人には一切表示されません（一覧にも出てきません）。記録には「非公開」のバッジが付きます。</li>
+      <li><span class="i18n-ja"><strong>チェックを入れたまま（初期状態）</strong>：他のログインユーザーからも記録一覧・月別一覧・詳細画面で見られます。</span><span class="i18n-en" hidden><strong>Left checked (the default)</strong>: other logged-in users can see it in the records list, monthly list, and detail screen.</span></li>
+      <li><span class="i18n-ja"><strong>チェックを外す</strong>：自分がログインしているときだけ見え、他の人には一切表示されません（一覧にも出てきません）。記録には「非公開」のバッジが付きます。</span><span class="i18n-en" hidden><strong>Unchecked</strong>: only visible while you're logged in &mdash; it's never shown to anyone else (it won't appear in lists either). The record gets a &ldquo;Private&rdquo; badge.</span></li>
     </ul>
-    <p>一度保存した記録の公開・非公開を後から切り替える機能は現在ありません。切り替えたい場合は、記録を削除して公開設定を変えて登録し直してください。</p>
+    <p>
+      <span class="i18n-ja">一度保存した記録の公開・非公開を後から切り替える機能は現在ありません。切り替えたい場合は、記録を削除して公開設定を変えて登録し直してください。</span>
+      <span class="i18n-en" hidden>There's currently no way to switch a record's visibility after it's saved. If you want to change it, delete the record and register it again with the setting you want.</span>
+    </p>
   </section>
 
   <section class="step" id="list">
-    <h2><span class="num">06</span>記録一覧・月別一覧・詳細</h2>
-    <p>「記録一覧」タブでは、これまでに登録した記録（自分の非公開記録＋みんなの公開記録）が新しい順に並びます。カードをクリックすると詳細画面が開きます。</p>
-    <p>記録の詳細画面には「◯年◯月の記録一覧」というボタンがあり、押すとその月に登録された記録だけの一覧に移動できます。</p>
+    <h2><span class="num">06</span><span class="i18n-ja">記録一覧・月別一覧・詳細</span><span class="i18n-en" hidden>Records list, monthly list &amp; detail view</span></h2>
+    <p>
+      <span class="i18n-ja">「記録一覧」タブでは、これまでに登録した記録（自分の非公開記録＋みんなの公開記録）が新しい順に並びます。カードをクリックすると詳細画面が開きます。</span>
+      <span class="i18n-en" hidden>The &ldquo;Records&rdquo; tab lists everything registered so far (your private records plus everyone's public ones) newest first. Click a card to open its detail screen.</span>
+    </p>
+    <p>
+      <span class="i18n-ja">記録の詳細画面には「◯年◯月の記録一覧」というボタンがあり、押すとその月に登録された記録だけの一覧に移動できます。</span>
+      <span class="i18n-en" hidden>A record's detail screen has a button labeled with its month (e.g. &ldquo;September 2026 record list&rdquo;) &mdash; press it to jump to a list of just that month's records.</span>
+    </p>
   </section>
 
   <section class="step" id="delete">
-    <h2><span class="num">07</span>記録を削除する</h2>
-    <p>記録の詳細画面をいちばん下までスクロールすると「この記録を削除する」ボタンがあります。押すと確認画面が表示され、もう一度「削除する」を押すと、写真やアクションもまとめて削除されます。</p>
-    <div class="warn"><span class="label">ご注意</span>削除は取り消せません。写真もGoogleドライブ上のファイルごと削除されます。削除できるのは、その記録を登録した本人のみです。</div>
+    <h2><span class="num">07</span><span class="i18n-ja">記録を削除する</span><span class="i18n-en" hidden>Deleting a record</span></h2>
+    <p>
+      <span class="i18n-ja">記録の詳細画面をいちばん下までスクロールすると「この記録を削除する」ボタンがあります。押すと確認画面が表示され、もう一度「削除する」を押すと、写真やアクションもまとめて削除されます。</span>
+      <span class="i18n-en" hidden>Scroll to the bottom of a record's detail screen and you'll find a &ldquo;Delete this record&rdquo; button. Pressing it shows a confirmation screen; press &ldquo;Delete&rdquo; again to remove the record along with its photos and actions.</span>
+    </p>
+    <div class="warn"><span class="label"><span class="i18n-ja">ご注意</span><span class="i18n-en" hidden>Note</span></span>
+      <span class="i18n-ja">削除は取り消せません。写真もGoogleドライブ上のファイルごと削除されます。削除できるのは、その記録を登録した本人のみです。</span>
+      <span class="i18n-en" hidden>Deletion can't be undone. Photos are also deleted along with their files on Google Drive. Only the person who registered a record can delete it.</span>
+    </div>
   </section>
 
   <section class="step" id="theme-mode">
-    <h2><span class="num">08</span>お題モード</h2>
-    <p>「お題モード」タブでは、ランダムに出される「お題」に沿ってモデルを作り、記録していくことができます。</p>
+    <h2><span class="num">08</span><span class="i18n-ja">お題モード</span><span class="i18n-en" hidden>Theme mode</span></h2>
+    <p><span class="i18n-ja">「お題モード」タブでは、ランダムに出される「お題」に沿ってモデルを作り、記録していくことができます。</span><span class="i18n-en" hidden>In the &ldquo;Theme mode&rdquo; tab, you can build and record a model based on a randomly drawn &ldquo;prompt.&rdquo;</span></p>
     <ol>
-      <li>「お題を引く」を押すと、お題が1つ表示される。</li>
-      <li>気に入らなければ「お題を引き直す」で別のお題を引き直せる。</li>
-      <li>「このお題でモデルを記録する」を押すと、通常の新規記録フォームに移動する（お題の内容がタイトル欄に自動で入りますが、自由に書き換えられます）。</li>
-      <li>あとは通常の記録と同じように、写真やアクションを登録して保存する。</li>
+      <li><span class="i18n-ja">「お題を引く」を押すと、お題が1つ表示される。</span><span class="i18n-en" hidden>Press &ldquo;Draw a prompt&rdquo; to see one prompt.</span></li>
+      <li><span class="i18n-ja">気に入らなければ「お題を引き直す」で別のお題を引き直せる。</span><span class="i18n-en" hidden>If you don't like it, press &ldquo;Draw again&rdquo; for a different one.</span></li>
+      <li><span class="i18n-ja">「このお題でモデルを記録する」を押すと、通常の新規記録フォームに移動する（お題の内容がタイトル欄に自動で入りますが、自由に書き換えられます）。</span><span class="i18n-en" hidden>Press &ldquo;Record a model for this prompt&rdquo; to go to the regular new-record form (the prompt text is filled into the title field automatically, but you can change it freely).</span></li>
+      <li><span class="i18n-ja">あとは通常の記録と同じように、写真やアクションを登録して保存する。</span><span class="i18n-en" hidden>From there, register photos and actions and save, just like a regular record.</span></li>
     </ol>
-    <p>お題モードで記録した内容は、「お題モード」タブの下部「これまでのお題モードの記録」に一覧表示されるほか、記録一覧などでは「お題」のバッジが付いて表示されます。</p>
+    <p>
+      <span class="i18n-ja">お題モードで記録した内容は、「お題モード」タブの下部「これまでのお題モードの記録」に一覧表示されるほか、記録一覧などでは「お題」のバッジが付いて表示されます。</span>
+      <span class="i18n-en" hidden>Records made in theme mode are listed under &ldquo;Past theme-mode records&rdquo; at the bottom of the &ldquo;Theme mode&rdquo; tab, and shown with a &ldquo;Theme&rdquo; badge in the records list and elsewhere.</span>
+    </p>
   </section>
 
   <section class="step" id="theme-admin">
-    <h2><span class="num">09</span>お題を管理する（管理者向け）</h2>
-    <div class="admin-note"><span class="label">管理者専用</span>お題の追加・編集・削除は、管理者として登録されたメールアドレスでログインしたときだけ操作できます。それ以外のユーザーには、この管理パネルは表示されません。</div>
-    <p>管理者アカウントでログインして「お題モード」タブを開くと、「お題を引く」カードの下に「お題を管理する（管理者のみ）」というパネルが表示されます。</p>
+    <h2><span class="num">09</span><span class="i18n-ja">お題を管理する（管理者向け）</span><span class="i18n-en" hidden>Managing prompts (for administrators)</span></h2>
+    <div class="admin-note"><span class="label"><span class="i18n-ja">管理者専用</span><span class="i18n-en" hidden>Administrators only</span></span>
+      <span class="i18n-ja">お題の追加・編集・削除は、管理者として登録されたメールアドレスでログインしたときだけ操作できます。それ以外のユーザーには、この管理パネルは表示されません。</span>
+      <span class="i18n-en" hidden>Adding, editing, and deleting prompts is only possible when logged in with an email address registered as an administrator. This admin panel isn't shown to other users.</span>
+    </div>
+    <p>
+      <span class="i18n-ja">管理者アカウントでログインして「お題モード」タブを開くと、「お題を引く」カードの下に「お題を管理する（管理者のみ）」というパネルが表示されます。</span>
+      <span class="i18n-en" hidden>Log in with an administrator account and open the &ldquo;Theme mode&rdquo; tab, and a panel labeled &ldquo;Manage prompts (administrators only)&rdquo; appears below the &ldquo;Draw a prompt&rdquo; card.</span>
+    </p>
     <div class="mock">
-      <div class="row" style="justify-content:space-between;"><span style="font-size:13.5px;">今のあなたを表すモデル</span><span><span class="btn" style="padding:5px 12px; font-size:12.5px;">編集</span> <span class="btn danger" style="padding:5px 12px; font-size:12.5px;">削除</span></span></div>
-      <div class="row"><div class="field">新しいお題を入力</div><span class="btn primary">追加する</span></div>
+      <div class="row" style="justify-content:space-between;"><span style="font-size:13.5px;"><span class="i18n-ja">今のあなたを表すモデル</span><span class="i18n-en" hidden>A model that represents you right now</span></span><span><span class="btn" style="padding:5px 12px; font-size:12.5px;"><span class="i18n-ja">編集</span><span class="i18n-en" hidden>Edit</span></span> <span class="btn danger" style="padding:5px 12px; font-size:12.5px;"><span class="i18n-ja">削除</span><span class="i18n-en" hidden>Delete</span></span></span></div>
+      <div class="row"><div class="field"><span class="i18n-ja">新しいお題を入力</span><span class="i18n-en" hidden>Enter a new prompt</span></div><span class="btn primary"><span class="i18n-ja">追加する</span><span class="i18n-en" hidden>Add</span></span></div>
     </div>
     <ul>
-      <li><strong>追加</strong>：下部の入力欄に新しいお題の文章を入力し、「追加する」を押す。</li>
-      <li><strong>編集</strong>：既存のお題の「編集」を押すと、その場でテキストを書き換えられる。「保存」で確定。</li>
-      <li><strong>削除</strong>：「削除」を押すと、そのお題は一覧から取り除かれる（取り消せません）。</li>
+      <li><span class="i18n-ja"><strong>追加</strong>：下部の入力欄に新しいお題の文章を入力し、「追加する」を押す。</span><span class="i18n-en" hidden><strong>Add</strong>: type the new prompt's text into the field at the bottom and press &ldquo;Add.&rdquo;</span></li>
+      <li><span class="i18n-ja"><strong>編集</strong>：既存のお題の「編集」を押すと、その場でテキストを書き換えられる。「保存」で確定。</span><span class="i18n-en" hidden><strong>Edit</strong>: press &ldquo;Edit&rdquo; on an existing prompt to rewrite its text in place. Press &ldquo;Save&rdquo; to confirm.</span></li>
+      <li><span class="i18n-ja"><strong>削除</strong>：「削除」を押すと、そのお題は一覧から取り除かれる（取り消せません）。</span><span class="i18n-en" hidden><strong>Delete</strong>: press &ldquo;Delete&rdquo; to remove that prompt from the list (this can't be undone).</span></li>
     </ul>
-    <p>ここで変更した内容は、全員が「お題を引く」で引けるお題にすぐ反映されます。</p>
+    <p><span class="i18n-ja">ここで変更した内容は、全員が「お題を引く」で引けるお題にすぐ反映されます。</span><span class="i18n-en" hidden>Changes made here immediately apply to the prompts everyone can draw with &ldquo;Draw a prompt.&rdquo;</span></p>
   </section>
 
   <section class="step" id="checks">
-    <h2><span class="num">10</span>アクションチェック</h2>
-    <p>新規記録の際に登録した「明日からのアクション」は、3日後・1週間後・1ヶ月後・3ヶ月後の4回、振り返りのタイミングを迎えます。そのタイミングが来ると、「アクションチェック」タブに件数のバッジが表示されます。</p>
+    <h2><span class="num">10</span><span class="i18n-ja">アクションチェック</span><span class="i18n-en" hidden>Action checks</span></h2>
+    <p>
+      <span class="i18n-ja">新規記録の際に登録した「明日からのアクション」は、3日後・1週間後・1ヶ月後・3ヶ月後の4回、振り返りのタイミングを迎えます。そのタイミングが来ると、「アクションチェック」タブに件数のバッジが表示されます。</span>
+      <span class="i18n-en" hidden>&ldquo;Actions starting tomorrow&rdquo; that you registered with a new record reach a check-in point four times: after 3 days, 1 week, 1 month, and 3 months. When one comes due, a count badge appears on the &ldquo;Action checks&rdquo; tab.</span>
+    </p>
     <ol>
-      <li>「アクションチェック」タブを開くと、チェック期限を迎えたアクションが一覧表示される。</li>
-      <li>「記録する」を押すと、実行できたかどうかの評価とコメントを入力できる。</li>
-      <li>入力すると、そのタイミングのチェックは完了となり、次のタイミング（例：1週間後）まで表示されなくなる。</li>
+      <li><span class="i18n-ja">「アクションチェック」タブを開くと、チェック期限を迎えたアクションが一覧表示される。</span><span class="i18n-en" hidden>Open the &ldquo;Action checks&rdquo; tab to see a list of actions whose check is due.</span></li>
+      <li><span class="i18n-ja">「記録する」を押すと、実行できたかどうかの評価とコメントを入力できる。</span><span class="i18n-en" hidden>Press &ldquo;Record&rdquo; to rate how well you followed through and add a comment.</span></li>
+      <li><span class="i18n-ja">入力すると、そのタイミングのチェックは完了となり、次のタイミング（例：1週間後）まで表示されなくなる。</span><span class="i18n-en" hidden>Once submitted, that check is complete and won't appear again until the next point (e.g. 1 week later).</span></li>
     </ol>
-    <p>もう振り返りが不要になったアクションは、記録の詳細画面から以降のチェックを停止することもできます。</p>
+    <p><span class="i18n-ja">もう振り返りが不要になったアクションは、記録の詳細画面から以降のチェックを停止することもできます。</span><span class="i18n-en" hidden>If you no longer need to check in on an action, you can stop future checks for it from the record's detail screen.</span></p>
   </section>
 
   <section class="step" id="medals">
-    <h2><span class="num">11</span>特別な記録（メダルと登録数の推移）</h2>
-    <p>「特別な記録」タブでは、これまでのモデル登録数に応じた記念メダルと、登録数の推移をふりかえれます。</p>
-    <h3>登録数の推移グラフ</h3>
-    <p>タブの最上部には、自分が記録した日ごとの累積登録数を表す折れ線グラフがあります。横軸が記録日、縦軸が累積個数で、記録した日数や個数に応じて目盛りの間隔が自動的に見やすく調整されます。グラフの上にマウスを合わせる（スマートフォンでは指でなぞる）と、その時点の日付と累積個数がツールチップで表示されます。</p>
-    <h3>メダル</h3>
-    <p>モデルの登録数が節目（1個目・3個目・10個目…10000個目まで、全36段階）に達するたびに、記念のメダルが届きます。ぞろ目や記念日を思わせる数字（3、333、365、777、999など）には、星の飾りが付きます。獲得したメダルは、記録を削除して登録数が減っても取り消されません。</p>
-    <div class="tip"><span class="label">ポイント</span>新規記録の保存時に新しいメダルを獲得すると、その場でお祝いのポップアップが表示されます。</div>
+    <h2><span class="num">11</span><span class="i18n-ja">特別な記録（メダルと登録数の推移）</span><span class="i18n-en" hidden>Special records (medals &amp; registration trend)</span></h2>
+    <p>
+      <span class="i18n-ja">「特別な記録」タブでは、これまでのモデル登録数に応じた記念メダルと、登録数の推移をふりかえれます。</span>
+      <span class="i18n-en" hidden>The &ldquo;Special records&rdquo; tab lets you look back at commemorative medals based on how many models you've registered, and at your registration trend.</span>
+    </p>
+    <h3><span class="i18n-ja">登録数の推移グラフ</span><span class="i18n-en" hidden>Registration trend chart</span></h3>
+    <p>
+      <span class="i18n-ja">タブの最上部には、自分が記録した日ごとの累積登録数を表す折れ線グラフがあります。横軸が記録日、縦軸が累積個数で、記録した日数や個数に応じて目盛りの間隔が自動的に見やすく調整されます。グラフの上にマウスを合わせる（スマートフォンでは指でなぞる）と、その時点の日付と累積個数がツールチップで表示されます。</span>
+      <span class="i18n-en" hidden>At the top of the tab is a line chart showing your cumulative registration count by date. The x-axis is the record date and the y-axis is the cumulative count; the tick spacing adjusts automatically to stay readable based on how many days and records you have. Hover over the chart with your mouse (or drag a finger on a phone) to see a tooltip with the date and cumulative count at that point.</span>
+    </p>
+    <h3><span class="i18n-ja">メダル</span><span class="i18n-en" hidden>Medals</span></h3>
+    <p>
+      <span class="i18n-ja">モデルの登録数が節目（1個目・3個目・10個目…10000個目まで、全36段階）に達するたびに、記念のメダルが届きます。ぞろ目や記念日を思わせる数字（3、333、365、777、999など）には、星の飾りが付きます。獲得したメダルは、記録を削除して登録数が減っても取り消されません。</span>
+      <span class="i18n-en" hidden>Every time your model count reaches a milestone (the 1st, 3rd, 10th &hellip; up to the 10,000th &mdash; 36 milestones in all), a commemorative medal arrives. Numbers that feel like repeating digits or special dates (3, 333, 365, 777, 999, and so on) get a star decoration. Medals you've earned aren't revoked even if your count later drops because you delete a record.</span>
+    </p>
+    <div class="tip"><span class="label"><span class="i18n-ja">ポイント</span><span class="i18n-en" hidden>Point</span></span>
+      <span class="i18n-ja">新規記録の保存時に新しいメダルを獲得すると、その場でお祝いのポップアップが表示されます。</span>
+      <span class="i18n-en" hidden>If saving a new record earns you a new medal, a celebration pop-up appears right away.</span>
+    </div>
   </section>
 
   <section class="step" id="faq">
-    <h2><span class="num">12</span>よくある質問</h2>
+    <h2><span class="num">12</span><span class="i18n-ja">よくある質問</span><span class="i18n-en" hidden>FAQ</span></h2>
     <dl class="faq">
-      <dt>Q. 保存しようとすると「サーバーからの応答がありませんでした」と出る</dt>
-      <dd>A. 通信が混み合っている可能性があります。少し時間をおいてから、もう一度「保存」を押してみてください。改善しない場合は、アプリの管理者に連絡してください。</dd>
+      <dt><span class="i18n-ja">Q. 保存しようとすると「サーバーからの応答がありませんでした」と出る</span><span class="i18n-en" hidden>Q. When I try to save, I see &ldquo;No response was received from the server&rdquo;</span></dt>
+      <dd><span class="i18n-ja">A. 通信が混み合っている可能性があります。少し時間をおいてから、もう一度「保存」を押してみてください。改善しない場合は、アプリの管理者に連絡してください。</span><span class="i18n-en" hidden>A. The network may be congested. Wait a moment and try pressing &ldquo;Save&rdquo; again. If it doesn't help, please contact the app's administrator.</span></dd>
 
-      <dt>Q. 登録しようとすると「メールアドレスの形式で入力してください」と出る</dt>
-      <dd>A. ログインIDはメールアドレス（例：you@example.com）である必要があります。半角英数字だけの名前などは使えません。</dd>
+      <dt><span class="i18n-ja">Q. 登録しようとすると「メールアドレスの形式で入力してください」と出る</span><span class="i18n-en" hidden>Q. When I try to sign up, I see &ldquo;Please enter a valid email address&rdquo;</span></dt>
+      <dd><span class="i18n-ja">A. ログインIDはメールアドレス（例：you@example.com）である必要があります。半角英数字だけの名前などは使えません。</span><span class="i18n-en" hidden>A. Your login ID must be an email address (e.g. you@example.com). A plain alphanumeric name alone can't be used.</span></dd>
 
-      <dt>Q. ログイン中なのに急に「再度ログインしてください」と出た</dt>
-      <dd>A. ログインの状態(セッション)には有効期限があります。もう一度ログインすれば、通常どおり使えます。</dd>
+      <dt><span class="i18n-ja">Q. ログイン中なのに急に「再度ログインしてください」と出た</span><span class="i18n-en" hidden>Q. I was logged in, but suddenly saw &ldquo;Please log in again&rdquo;</span></dt>
+      <dd><span class="i18n-ja">A. ログインの状態(セッション)には有効期限があります。もう一度ログインすれば、通常どおり使えます。</span><span class="i18n-en" hidden>A. Your logged-in state (session) has an expiration. Log in again and everything will work as usual.</span></dd>
 
-      <dt>Q. 写真が表示されない</dt>
-      <dd>A. 一時的な読み込みの問題であることが多いです。ページを再読み込みしてみてください。</dd>
+      <dt><span class="i18n-ja">Q. 写真が表示されない</span><span class="i18n-en" hidden>Q. Photos aren't showing up</span></dt>
+      <dd><span class="i18n-ja">A. 一時的な読み込みの問題であることが多いです。ページを再読み込みしてみてください。</span><span class="i18n-en" hidden>A. This is often a temporary loading issue. Try reloading the page.</span></dd>
 
-      <dt>Q. 公開・非公開の設定を後から変えたい</dt>
-      <dd>A. 現在のところ、保存後に公開設定だけを変更する機能はありません。一度削除して、公開設定を選び直して登録し直してください。</dd>
+      <dt><span class="i18n-ja">Q. 公開・非公開の設定を後から変えたい</span><span class="i18n-en" hidden>Q. I want to change a record's visibility after saving it</span></dt>
+      <dd><span class="i18n-ja">A. 現在のところ、保存後に公開設定だけを変更する機能はありません。一度削除して、公開設定を選び直して登録し直してください。</span><span class="i18n-en" hidden>A. Currently there's no way to change just the visibility setting after saving. Delete the record and register it again with the setting you want.</span></dd>
 
-      <dt>Q. お題を追加・編集したい</dt>
-      <dd>A. お題の管理は、管理者として登録されたアカウントでログインした場合のみ行えます。詳しくは <a href="#theme-admin">9. お題を管理する（管理者向け）</a> を参照してください。</dd>
+      <dt><span class="i18n-ja">Q. お題を追加・編集したい</span><span class="i18n-en" hidden>Q. I want to add or edit prompts</span></dt>
+      <dd><span class="i18n-ja">A. お題の管理は、管理者として登録されたアカウントでログインした場合のみ行えます。詳しくは <a href="#theme-admin">9. お題を管理する（管理者向け）</a> を参照してください。</span><span class="i18n-en" hidden>A. Managing prompts is only possible when logged in with an account registered as an administrator. See <a href="#theme-admin">9. Managing prompts (for administrators)</a> for details.</span></dd>
     </dl>
   </section>
 
   <footer>
-    <p><a href="index.html">&larr; モデログのトップページに戻る</a></p>
+    <p><a href="index.html"><span class="i18n-ja">&larr; モデログのトップページに戻る</span><span class="i18n-en" hidden>&larr; Back to the Modelog homepage</span></a></p>
   </footer>
 </div>
+<script>
+(function(){
+  var lang = 'ja';
+  try{
+    var saved = localStorage.getItem('mol_lang');
+    if(saved === 'en' || saved === 'ja') lang = saved;
+  }catch(e){}
+
+  var TITLE_JA = '使い方ガイド - モデログ';
+  var TITLE_EN = 'User Guide - Modelog';
+
+  function apply(){
+    document.documentElement.setAttribute('lang', lang);
+    document.title = lang === 'en' ? TITLE_EN : TITLE_JA;
+    var jaEls = document.querySelectorAll('.i18n-ja');
+    var enEls = document.querySelectorAll('.i18n-en');
+    for(var i=0; i<jaEls.length; i++){ jaEls[i].hidden = (lang !== 'ja'); }
+    for(var j=0; j<enEls.length; j++){ enEls[j].hidden = (lang !== 'en'); }
+    var btn = document.getElementById('langToggle');
+    if(btn) btn.textContent = lang === 'en' ? '日本語' : 'EN';
+  }
+
+  function toggleLang(){
+    lang = (lang === 'en') ? 'ja' : 'en';
+    try{ localStorage.setItem('mol_lang', lang); }catch(e){}
+    apply();
+  }
+
+  function init(){
+    var btn = document.getElementById('langToggle');
+    if(btn) btn.addEventListener('click', toggleLang);
+    apply();
+  }
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', init);
+  }else{
+    init();
+  }
+})();
+</script>
 </body>
 </html>
