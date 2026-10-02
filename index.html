@@ -418,6 +418,8 @@
       theme_admin_hint:'ここで追加・編集・削除したお題が、全員の「お題を引く」に反映されます。',
       theme_admin_empty:'お題が登録されていません。', theme_save:'保存', theme_cancel:'キャンセル', theme_edit:'編集', theme_delete:'削除',
       theme_new_placeholder:'新しいお題を入力（例：理想の休日を表すモデル）', theme_add:'追加する',
+      theme_new_placeholder_en:'英語の問い（任意。未入力の場合、英語モードでも日本語のまま表示されます）',
+      theme_no_translation:'英訳未設定',
       err_theme_text_required:'お題の内容を入力してください。', err_theme_add_failed:'追加に失敗しました: {msg}',
       err_theme_update_failed:'更新に失敗しました: {msg}', err_theme_delete_failed:'削除に失敗しました: {msg}',
       medal_chart_title:'登録数の推移', medal_chart_empty:'記録を始めると、ここに登録数の推移グラフが表示されます。',
@@ -531,6 +533,8 @@
       theme_admin_hint:'Prompts added, edited, or deleted here apply to everyone\'s "Draw a prompt".',
       theme_admin_empty:'No prompts have been added yet.', theme_save:'Save', theme_cancel:'Cancel', theme_edit:'Edit', theme_delete:'Delete',
       theme_new_placeholder:'Enter a new prompt (e.g. a model representing your ideal day off)', theme_add:'Add',
+      theme_new_placeholder_en:'English prompt (optional — if left blank, English mode will still show the Japanese text)',
+      theme_no_translation:'No English translation yet',
       err_theme_text_required:'Please enter the prompt text.', err_theme_add_failed:'Failed to add: {msg}',
       err_theme_update_failed:'Failed to update: {msg}', err_theme_delete_failed:'Failed to delete: {msg}',
       medal_chart_title:'Registration trend', medal_chart_empty:'Once you start recording, a chart of your registration trend will appear here.',
@@ -676,6 +680,13 @@
     if(matchedKey) return SERVER_MSG_EN_PREFIX[matchedKey] + msg.slice(matchedKey.length);
     return msg;
   }
+  /** お題オブジェクト({text, textEn})を、現在の表示言語に応じて表示する。
+      英語モードでも英訳(textEn)が未入力のお題は、これまでどおり日本語のまま表示する。 */
+  function themeText(themeObj){
+    if(!themeObj) return '';
+    if(lang === 'en' && themeObj.textEn) return themeObj.textEn;
+    return themeObj.text || '';
+  }
 
   /* ---------- constants ---------- */
   var SLOTS = [
@@ -750,6 +761,35 @@
     'あなたが乗り越えたい恐れを表すモデル',
     '理想のコミュニティを表すモデル'
   ];
+  /* THEME_FALLBACKの英訳(同じ並び順)。サーバーからお題一覧がまだ取得できていない間、
+     オフライン的に「お題を引く」を使えるようにするための保険用データ(Code.gs側の
+     DEFAULT_THEMES_ENと対応)。 */
+  var THEME_FALLBACK_EN = [
+    'A model that represents you right now',
+    'A model that represents your ideal team',
+    'A model that represents an obstacle you recently overcame',
+    'A model that represents who you want to be in 3 years',
+    'A model that represents what "security" means to you',
+    'A model that represents your team\'s current mood',
+    'A model that represents what supports you',
+    'A model that represents a challenge you\'re currently facing',
+    'A model that represents your strengths',
+    'A model that represents your ideal workplace',
+    'A model that represents an important turning point in your life so far',
+    'A model that represents what "growth" means to you',
+    'A model that represents your current source of energy',
+    'A model that represents what your team is missing',
+    'A model that represents a value you hold dear',
+    'A model that represents your biggest worry right now',
+    'A model that represents your ideal leader',
+    'A model that represents what "challenge" means to you',
+    'A model of the animal or creature that represents you right now',
+    'A model that represents how you want to be in six months',
+    'A model that represents your starting point',
+    'A model that represents the rest you need right now',
+    'A model that represents a fear you want to overcome',
+    'A model that represents your ideal community'
+  ];
 
   /* モデルの登録数がこの数に達するたびにメダルを1つ授与する(サーバー側 MEDAL_MILESTONES と
      必ず同じ値にすること)。フロント側では、達成済み/未達成をまとめて一覧表示する
@@ -764,8 +804,8 @@
   /* ---------- state ---------- */
   var currentView = 'list';
   var currentDetailId = null;
-  var currentTheme = '';
-  var themesList = []; // サーバー(Themesシート)から取得したお題一覧 [{id,text}, ...]
+  var currentTheme = null; // {id, text, textEn} | null
+  var themesList = []; // サーバー(Themesシート)から取得したお題一覧 [{id,text,textEn}, ...]
   var isAdmin = false; // お題の追加・修正ができる管理者かどうか(サーバーがセッションから判定)
   var medalsEarned = []; // 自分が獲得済みのメダル [{milestone, awardedAt}, ...]
   var medalCount = 0; // 自分がこれまでに登録したモデルの件数(サーバー算出)
@@ -802,7 +842,7 @@
 
   function freshDraft(){
     return {
-      title:'', date:todayStr(), place:'', noticed:'', story:'', isPublic:true, theme:'',
+      title:'', date:todayStr(), place:'', noticed:'', story:'', isPublic:true, theme:'', themeEn:'',
       recordMode:'single',
       photos: initialPhotosForMode('single'),
       video: null,
@@ -1417,7 +1457,7 @@
     html += '<h2 class="section-title">'+t('theme_title')+'</h2>';
     html += '<p class="section-hint">'+t('theme_hint')+'</p>';
     if(currentTheme){
-      html += '<div class="notice"><div style="font-size:12px; color:var(--text-muted); margin-bottom:4px;">'+t('theme_current_label')+'</div><div style="font-size:18px; font-weight:700;">'+escapeHtml(currentTheme)+'</div></div>';
+      html += '<div class="notice"><div style="font-size:12px; color:var(--text-muted); margin-bottom:4px;">'+t('theme_current_label')+'</div><div style="font-size:18px; font-weight:700;">'+escapeHtml(themeText(currentTheme))+'</div></div>';
       html += '<div class="row">';
       html += '<button type="button" class="btn btn-primary" data-action="theme-start-record">'+t('theme_start_record')+'</button>';
       html += '<button type="button" class="btn btn-secondary" data-action="theme-draw">'+t('theme_redraw')+'</button>';
@@ -1451,14 +1491,20 @@
     if(themesList.length===0){ html += '<p class="section-hint">'+t('theme_admin_empty')+'</p>'; }
     themesList.forEach(function(th){
       if(editingThemeId === th.id){
-        html += '<div class="row" style="align-items:center;">'+
-          '<input type="text" id="theme-edit-input" value="'+escapeHtml(th.text)+'" style="flex:1;" />'+
-          '<button type="button" class="btn btn-primary" data-action="theme-save-edit" data-id="'+th.id+'" '+(themeAdminBusy?'disabled':'')+'>'+t('theme_save')+'</button>'+
-          '<button type="button" class="btn btn-secondary" data-action="theme-cancel-edit" '+(themeAdminBusy?'disabled':'')+'>'+t('theme_cancel')+'</button>'+
+        html += '<div class="stack" style="gap:6px; border:1px solid var(--border); border-radius:var(--radius-s); padding:10px;">'+
+          '<input type="text" id="theme-edit-input" value="'+escapeHtml(th.text)+'" />'+
+          '<input type="text" id="theme-edit-input-en" value="'+escapeHtml(th.textEn||'')+'" placeholder="'+escapeHtml(t('theme_new_placeholder_en'))+'" />'+
+          '<div class="row">'+
+            '<button type="button" class="btn btn-primary" data-action="theme-save-edit" data-id="'+th.id+'" '+(themeAdminBusy?'disabled':'')+'>'+t('theme_save')+'</button>'+
+            '<button type="button" class="btn btn-secondary" data-action="theme-cancel-edit" '+(themeAdminBusy?'disabled':'')+'>'+t('theme_cancel')+'</button>'+
+          '</div>'+
         '</div>';
       } else {
         html += '<div class="row" style="justify-content:space-between; align-items:center;">'+
-          '<span>'+escapeHtml(th.text)+'</span>'+
+          '<span class="stack" style="gap:2px;">'+
+            '<span>'+escapeHtml(th.text)+'</span>'+
+            (th.textEn ? '<span style="font-size:12px; color:var(--text-muted);">'+escapeHtml(th.textEn)+'</span>' : '<span style="font-size:12px; color:var(--text-muted); font-style:italic;">'+t('theme_no_translation')+'</span>')+
+          '</span>'+
           '<span class="row">'+
             '<button type="button" class="btn btn-secondary" data-action="theme-edit-start" data-id="'+th.id+'">'+t('theme_edit')+'</button>'+
             '<button type="button" class="btn-danger-text" data-action="theme-delete" data-id="'+th.id+'">'+t('theme_delete')+'</button>'+
@@ -1467,9 +1513,10 @@
       }
     });
     html += '</div>';
-    html += '<div class="row" style="align-items:center;">'+
-      '<input type="text" id="theme-new-input" placeholder="'+escapeHtml(t('theme_new_placeholder'))+'" style="flex:1;" />'+
-      '<button type="button" class="btn btn-primary" data-action="theme-add" '+(themeAdminBusy?'disabled':'')+'>'+t('theme_add')+'</button>'+
+    html += '<div class="stack" style="gap:6px;">'+
+      '<input type="text" id="theme-new-input" placeholder="'+escapeHtml(t('theme_new_placeholder'))+'" />'+
+      '<input type="text" id="theme-new-input-en" placeholder="'+escapeHtml(t('theme_new_placeholder_en'))+'" />'+
+      '<button type="button" class="btn btn-primary" data-action="theme-add" '+(themeAdminBusy?'disabled':'')+' style="align-self:flex-start;">'+t('theme_add')+'</button>'+
     '</div>';
     html += '</div>';
     return html;
@@ -1780,7 +1827,7 @@
     html += '<h2 class="section-title">'+t('new_record_title')+'</h2>';
     if(!API_URL) html += '<div class="notice">'+t('notice_api_url_missing_save')+'</div>';
     if(formError) html += '<div class="notice error">'+escapeHtml(formError)+'</div>';
-    if(draft.theme){ html += '<div class="notice">'+t('theme_mode_notice',{theme:escapeHtml(draft.theme)})+'</div>'; }
+    if(draft.theme){ html += '<div class="notice">'+t('theme_mode_notice',{theme:escapeHtml((lang==='en' && draft.themeEn) ? draft.themeEn : draft.theme)})+'</div>'; }
     html += '<div class="field-grid">';
     html += '<label class="field"><span>'+t('field_title')+'</span><input type="text" id="f-title" value="'+escapeHtml(draft.title)+'" placeholder="'+escapeHtml(t('field_title_placeholder'))+'" /></label>';
     html += '<label class="field"><span>'+t('field_date')+'</span><input type="date" id="f-date" value="'+draft.date+'" /></label>';
@@ -1972,11 +2019,13 @@
   /* ---------- お題の管理(管理者のみ。サーバー側でも必ずrequireAdminで検証される) ---------- */
   async function doAddTheme(){
     var input = document.getElementById('theme-new-input');
+    var inputEn = document.getElementById('theme-new-input-en');
     var text = input ? input.value.trim() : '';
+    var textEn = inputEn ? inputEn.value.trim() : '';
     if(!text){ themeAdminError=t('err_theme_text_required'); renderView(); return; }
     themeAdminBusy = true; themeAdminError=''; renderView();
     try{
-      await apiCall('createTheme', {text:text});
+      await apiCall('createTheme', {text:text, textEn:textEn});
       themeAdminBusy = false;
       await refreshData(true);
     }catch(e){
@@ -1988,11 +2037,13 @@
   }
   async function doSaveThemeEdit(id){
     var input = document.getElementById('theme-edit-input');
+    var inputEn = document.getElementById('theme-edit-input-en');
     var text = input ? input.value.trim() : '';
+    var textEn = inputEn ? inputEn.value.trim() : '';
     if(!text){ themeAdminError=t('err_theme_text_required'); renderView(); return; }
     themeAdminBusy = true; themeAdminError=''; renderView();
     try{
-      await apiCall('updateTheme', {id:id, text:text});
+      await apiCall('updateTheme', {id:id, text:text, textEn:textEn});
       themeAdminBusy = false; editingThemeId = null;
       await refreshData(true);
     }catch(e){
@@ -2314,11 +2365,17 @@
     else if(action==='action-remove-row'){ var idx=Number(el.getAttribute('data-idx')); draft.actions.splice(idx,1); if(draft.actions.length===0) draft.actions.push(''); renderView(); }
     else if(action==='save-new-model'){ doSaveNewModel(); }
     else if(action==='theme-draw'){
-      var pool = themesList.length ? themesList.map(function(t){ return t.text; }) : THEME_FALLBACK;
+      var pool = themesList.length ? themesList : THEME_FALLBACK.map(function(text, idx){ return {text: text, textEn: THEME_FALLBACK_EN[idx] || ''}; });
       currentTheme = pool[Math.floor(Math.random()*pool.length)];
       renderView();
     }
-    else if(action==='theme-start-record'){ draft = freshDraft(); draft.theme = currentTheme; draft.title = currentTheme; currentView='new'; renderApp(); }
+    else if(action==='theme-start-record'){
+      draft = freshDraft();
+      draft.theme = currentTheme ? (currentTheme.text || '') : '';
+      draft.themeEn = currentTheme ? (currentTheme.textEn || '') : '';
+      draft.title = themeText(currentTheme);
+      currentView='new'; renderApp();
+    }
     else if(action==='theme-edit-start'){ editingThemeId = el.getAttribute('data-id'); themeAdminError=''; renderView(); }
     else if(action==='theme-cancel-edit'){ editingThemeId = null; themeAdminError=''; renderView(); }
     else if(action==='theme-save-edit'){ doSaveThemeEdit(el.getAttribute('data-id')); }
