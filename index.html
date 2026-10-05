@@ -2069,7 +2069,7 @@
       currentView = 'detail'; currentDetailId = modelId;
       await refreshData(true);
       if(modelRes.newMedals && modelRes.newMedals.length){
-        showMedalCelebration(modelRes.newMedals[0]);
+        showMedalCelebration(modelRes.newMedals[modelRes.newMedals.length - 1]);
       }
     }catch(e){
       console.error(e);
